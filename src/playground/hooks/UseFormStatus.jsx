@@ -1,5 +1,7 @@
 import { useFormStatus } from "react-dom";
+import { useSyncExternalStore } from "react";
 import Header from "../utils/Header";
+import { themeStore } from "../utils/stores";
 
 function SubmitBtn() {
   const { pending } = useFormStatus();
@@ -10,12 +12,13 @@ function SubmitBtn() {
   );
 }
 
-export default function UseFormStatus({ isDark, onBack }) {
+export default function UseFormStatus() {
+  const isDark = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot);
   const text = isDark ? "#f1f5f9" : "#0f172a";
   const sub = isDark ? "#94a3b8" : "#64748b";
 
   return (
-    <Header isDark={isDark} onBack={onBack} title="useFormStatus" emoji="📡" category="Form/Action" categoryColor="#ec4899">
+    <Header title="useFormStatus" emoji="📡" category="Form/Action" categoryColor="#ec4899">
       <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
         <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
           <code style={{ color: "#ec4899" }}>useFormStatus</code> se usa en un componente <strong>hijo</strong> del form para leer si está pendiente. No puede usarse en el mismo componente del form.

@@ -1,32 +1,26 @@
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
+import { useNavigate } from "react-router-dom";
 import { themeStore } from "./utils/stores";
-import UseId from "./hooks/UseId";
-import UseDebugValue from "./hooks/UseDebugValue";
-import UseSyncExternalStore from "./hooks/UseSyncExternalStore";
-import Use from "./hooks/Use";
-import UseActionState from "./hooks/UseActionState";
-import UseFormStatus from "./hooks/UseFormStatus";
+
 
 const hooks = [
-  { id: "useId",                 emoji: "🪪", category: "Utility",     color: "#f59e0b" },
-  { id: "useDebugValue",         emoji: "🐛", category: "Utility",     color: "#10b981" },
-  { id: "useSyncExternalStore",  emoji: "🔄", category: "Utility",     color: "#3b82f6" },
-  { id: "use",                   emoji: "⚡", category: "Utility",     color: "#a855f7" },
-  { id: "useActionState",        emoji: "📋", category: "Form/Action", color: "#ef4444" },
-  { id: "useFormStatus",         emoji: "📡", category: "Form/Action", color: "#ec4899" },
+  { id: "useState",                emoji: "📌", category: "State",        color: "#8b5cf6" },
+  { id: "useReducer",             emoji: "🔀", category: "State",        color: "#7c3aed" },
+  { id: "useEffect",              emoji: "🔄", category: "Side Effect",  color: "#3b82f6" },
+  { id: "useLayoutEffect",        emoji: "🎨", category: "Side Effect",  color: "#06b6d4" },
+  { id: "useInsertionEffect",     emoji: "💉", category: "Side Effect",  color: "#10b981" },
+  { id: "useOptimistic",          emoji: "⚡", category: "Transition",   color: "#f59e0b" },
+  { id: "useNavigate",            emoji: "🧭", category: "Navigation",   color: "#ef4444" },
+  { id: "useId",                  emoji: "🪪", category: "Utility",      color: "#f59e0b" },
+  { id: "useDebugValue",          emoji: "🐛", category: "Utility",      color: "#10b981" },
+  { id: "useSyncExternalStore",   emoji: "🔗", category: "Utility",      color: "#3b82f6" },
+  { id: "use",                    emoji: "⚙️", category: "Utility",      color: "#a855f7" },
+  { id: "useActionState",         emoji: "📋", category: "Form/Action",  color: "#ef4444" },
+  { id: "useFormStatus",          emoji: "📡", category: "Form/Action",  color: "#ec4899" },
 ];
 
-const hookComponents = {
-  useId: UseId,
-  useDebugValue: UseDebugValue,
-  useSyncExternalStore: UseSyncExternalStore,
-  use: Use,
-  useActionState: UseActionState,
-  useFormStatus: UseFormStatus,
-};
-
 export default function HomeHooks() {
-  const [active, setActive] = useState(null);
+  const navigate = useNavigate();
   const isDark = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot);
 
   const bg = isDark ? "#0a0f1e" : "#f8fafc";
@@ -35,22 +29,13 @@ export default function HomeHooks() {
   const sub = isDark ? "#94a3b8" : "#64748b";
   const border = isDark ? "#1e293b" : "#e2e8f0";
 
-  // Si hay un hook activo, renderizar su componente
-  if (active) {
-    const Component = hookComponents[active];
-    return <Component isDark={isDark} onBack={() => setActive(null)} />;
-  }
-
   return (
     <div style={{ minHeight: "100vh", background: bg, fontFamily: "'IBM Plex Mono', monospace", transition: "background 0.3s" }}>
       <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
-      {/* Header */}
       <div style={{ background: card, borderBottom: `1px solid ${border}`, padding: "1.5rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ color: "#6366f1", fontWeight: 700, fontSize: "1.3rem" }}>⚛ React Hooks</span>
-          </div>
+          <span style={{ color: "#6366f1", fontWeight: 700, fontSize: "1.3rem" }}>⚛ React Hooks</span>
           <p style={{ color: sub, margin: "4px 0 0", fontSize: "0.8rem" }}>Hooks #14–19 · Playground</p>
         </div>
         <div style={{ fontSize: "0.75rem", color: sub, background: isDark ? "#1e293b" : "#f1f5f9", padding: "4px 10px", borderRadius: 6 }}>
@@ -63,7 +48,7 @@ export default function HomeHooks() {
         <p style={{ color: sub, marginBottom: "2rem", fontSize: "0.85rem" }}>Haz clic en cualquier hook para ver su descripción y ejercicio interactivo.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
           {hooks.map(h => (
-            <div key={h.id} onClick={() => setActive(h.id)} style={{ background: card, border: `1px solid ${border}`, borderRadius: 12, padding: "1.5rem", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+            <div key={h.id} onClick={() => navigate(`/${h.id}`)} style={{ background: card, border: `1px solid ${border}`, borderRadius: 12, padding: "1.5rem", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${h.color}33`; }}
               onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
             >
@@ -76,7 +61,14 @@ export default function HomeHooks() {
               </div>
               <p style={{ color: sub, fontSize: "0.8rem", margin: 0, lineHeight: 1.5 }}>
                 {{
-                  useId: "Genera IDs únicos para vincular labels con inputs de forma accesible.",
+                  useState: "Gestiona estado local en componentes funcionales.",
+                  useReducer: "Maneja lógica compleja de estado con dispatch.",
+                  useEffect: "Ejecuta efectos secundarios en componentes.",
+                  useLayoutEffect: "Ejecuta efectos antes de que el navegador pinte.",
+                  useInsertionEffect: "Inserta estilos dinámicos antes del layout.",
+                  useOptimistic: "Actualiza la UI mientras se procesa una acción.",
+                  useNavigate: "Navega entre rutas en aplicaciones con React Router.",
+                  useId: "Genera IDs únicos para vincular labels con inputs.",
                   useDebugValue: "Etiqueta hooks personalizados en React DevTools.",
                   useSyncExternalStore: "Se suscribe a stores externos fuera del árbol de React.",
                   use: "Lee Promises directamente en el render con Suspense.",

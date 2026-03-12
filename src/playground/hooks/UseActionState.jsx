@@ -1,7 +1,9 @@
-import { useActionState } from "react";
+import { useActionState, useSyncExternalStore } from "react";
 import Header from "../utils/Header";
+import { themeStore } from "../utils/stores";
 
-export default function UseActionState({ isDark, onBack }) {
+export default function UseActionState() {
+  const isDark = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot);
   const text = isDark ? "#f1f5f9" : "#0f172a";
   const sub = isDark ? "#94a3b8" : "#64748b";
 
@@ -13,7 +15,7 @@ export default function UseActionState({ isDark, onBack }) {
   }, { error: null, success: false });
 
   return (
-    <Header isDark={isDark} onBack={onBack} title="useActionState" emoji="📋" category="Form/Action" categoryColor="#ef4444">
+    <Header title="useActionState" emoji="📋" category="Form/Action" categoryColor="#ef4444">
       <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
         <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
           Gestiona el estado de una acción de formulario: resultado anterior, estado pendiente y action handler.

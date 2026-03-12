@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useOnlineStatus } from "../utils/hooks";
 import Header from "../utils/Header";
+import { themeStore } from "../utils/stores";
 
-export default function UseDebugValue({ isDark, onBack }) {
+export default function UseDebugValue() {
+  const isDark = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot);
   const text = isDark ? "#f1f5f9" : "#0f172a";
   const sub = isDark ? "#94a3b8" : "#64748b";
   const card = isDark ? "#0f172a" : "#ffffff";
@@ -16,7 +18,7 @@ export default function UseDebugValue({ isDark, onBack }) {
   }, []);
 
   return (
-    <Header isDark={isDark} onBack={onBack} title="useDebugValue" emoji="🐛" category="Utility" categoryColor="#10b981">
+    <Header title="useDebugValue" emoji="🐛" category="Utility" categoryColor="#10b981">
       <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
         <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
           <code style={{ color: "#10b981" }}>useDebugValue</code> etiqueta hooks personalizados en React DevTools. Aquí lo usamos en un hook de estado de red.

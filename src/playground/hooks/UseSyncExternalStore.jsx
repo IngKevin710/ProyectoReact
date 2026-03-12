@@ -2,13 +2,14 @@ import { useSyncExternalStore } from "react";
 import { themeStore } from "../utils/stores";
 import Header from "../utils/Header";
 
-export default function UseSyncExternalStore({ isDark, onBack }) {
+export default function UseSyncExternalStore() {
+  const isDark = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot);
   const text = isDark ? "#f1f5f9" : "#0f172a";
   const sub = isDark ? "#94a3b8" : "#64748b";
   const border = isDark ? "#1e293b" : "#e2e8f0";
 
   return (
-    <Header isDark={isDark} onBack={onBack} title="useSyncExternalStore" emoji="🔄" category="Utility" categoryColor="#3b82f6">
+    <Header title="useSyncExternalStore" emoji="🔗" category="Utility" categoryColor="#3b82f6">
       <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
         <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
           Se suscribe a un store externo fuera de React. El tema vive en una variable global y este hook lo sincroniza.
