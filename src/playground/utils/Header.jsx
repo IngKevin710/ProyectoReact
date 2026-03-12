@@ -1,4 +1,10 @@
-export default function Header({ isDark, onBack, title, emoji, category, categoryColor, children }) {
+import { useNavigate } from "react-router-dom";
+import { useSyncExternalStore } from "react";
+import { themeStore } from "./stores";
+
+export default function Header({ title, emoji, category, categoryColor, children }) {
+  const navigate = useNavigate();
+  const isDark = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot);
   const bg = isDark ? "#0a0f1e" : "#f8fafc";
   const card = isDark ? "#0f172a" : "#ffffff";
   const text = isDark ? "#f1f5f9" : "#0f172a";
@@ -9,11 +15,9 @@ export default function Header({ isDark, onBack, title, emoji, category, categor
     <div style={{ minHeight: "100vh", background: bg, fontFamily: "'IBM Plex Mono', monospace", transition: "background 0.3s" }}>
       <div style={{ background: card, borderBottom: `1px solid ${border}`, padding: "1.5rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {onBack && (
-            <button onClick={onBack} style={{ background: "none", border: `1px solid ${border}`, color: text, padding: "4px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.85rem" }}>
-              ← Home
-            </button>
-          )}
+          <button onClick={() => navigate("/")} style={{ background: "none", border: `1px solid ${border}`, color: text, padding: "4px 12px", borderRadius: 6, cursor: "pointer", fontSize: "0.85rem" }}>
+            ← Home
+          </button>
           <span style={{ color: "#6366f1", fontWeight: 700, fontSize: "1.3rem" }}>⚛ React Hooks</span>
           {title && <span style={{ color: sub }}>/ <span style={{ color: text, fontWeight: 700 }}>{title}</span></span>}
         </div>
