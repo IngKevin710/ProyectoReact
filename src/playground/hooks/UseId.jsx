@@ -1,37 +1,31 @@
 import { useId } from "react";
-import { useNavigate } from "react-router-dom";
+import Header from "../utils/Header";
 
-function FormField({ label, type = "text" }) {
+function Field({ label, type = "text" }) {
   const id = useId();
   return (
     <div style={{ marginBottom: "1rem" }}>
-      <label htmlFor={id} style={{ display: "block", fontWeight: 600, marginBottom: "4px" }}>
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #cbd5e1", width: "100%" }}
-      />
+      <label htmlFor={id} style={{ display: "block", fontWeight: 600, marginBottom: 4, color: "#e2e8f0" }}>{label}</label>
+      <input id={id} type={type} placeholder={`Ingresa tu ${label.toLowerCase()}...`} style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #475569", width: "100%", background: "#1e293b", color: "#f1f5f9", boxSizing: "border-box" }} />
     </div>
   );
 }
 
-export default function UseId() {
-  const navigate = useNavigate();
+export default function UseId({ isDark, onBack }) {
+  const text = isDark ? "#f1f5f9" : "#0f172a";
+  const sub = isDark ? "#94a3b8" : "#64748b";
+
   return (
-    <div style={{ maxWidth: 500, margin: "2rem auto", fontFamily: "sans-serif", padding: "2rem" }}>
-      <button onClick={() => navigate("/")}>← Volver al Home</button>
-      <h1>useId</h1>
-      <p>Genera IDs únicos y estables para asociar labels con inputs de forma accesible, sin colisiones entre componentes.</p>
-      <hr />
-      <h3>Ejemplo: Formulario de registro</h3>
-      <FormField label="Nombre" />
-      <FormField label="Correo electrónico" type="email" />
-      <FormField label="Contraseña" type="password" />
-      <p style={{ fontSize: "0.85rem", color: "#64748b" }}>
-        Cada campo tiene un ID único generado por <code>useId()</code>, aunque el componente se reutilice varias veces.
-      </p>
-    </div>
+    <Header isDark={isDark} onBack={onBack} title="useId" emoji="🪪" category="Utility" categoryColor="#f59e0b">
+      <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
+        <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
+          Cada campo recibe un ID único generado automáticamente por <code style={{ color: "#f59e0b" }}>useId()</code>, evitando colisiones aunque el componente se reutilice.
+        </p>
+        <Field label="Nombre" />
+        <Field label="Correo electrónico" type="email" />
+        <Field label="Contraseña" type="password" />
+        <p style={{ fontSize: "0.78rem", color: sub, marginTop: "0.5rem", fontFamily: "sans-serif" }}>💡 Inspecciona el DOM y verás IDs como <code>:r0:</code>, <code>:r1:</code>...</p>
+      </div>
+    </Header>
   );
 }

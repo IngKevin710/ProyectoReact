@@ -13,8 +13,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<h1>Bienvenido a nuestro proyecto</h1>} />
-        <Route path="/homehooks" element={<HomeHooks />} />
+        <Route path="/" element={<HomeHooks />} />
         <Route path="/useid" element={<UseId />} />
         <Route path="/usedebugvalue" element={<UseDebugValue />} />
         <Route path="/usesyncexternalstore" element={<UseSyncExternalStore />} />
