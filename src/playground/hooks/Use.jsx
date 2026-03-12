@@ -1,83 +1,38 @@
-import { use, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { use, useState, Suspense } from "react";
+import { fetchJoke } from "../utils/stores";
+import Header from "../utils/Header";
 
-// Componente que simula una promesa
-function UserProfile({ userPromise }) {
-  // El hook 'use' suspende hasta que la promesa se resuelva
-  const user = use(userPromise);
-  
+function JokeDisplay({ promise }) {
+  const joke = use(promise);
   return (
-    <div style={{
-      padding: "1rem",
-      background: "#f0f9ff",
-      borderRadius: 8,
-      border: "1px solid #bae6fd"
-    }}>
-      <h4 style={{ margin: "0 0 0.5rem 0", color: "#0369a1" }}>
-        👤 {user.name}
-      </h4>
-      <p style={{ margin: 0, color: "#0c4a6e", fontSize: "0.9rem" }}>
-        📧 {user.email}
-      </p>
+    <div style={{ background: "#1e293b", padding: "1.2rem", borderRadius: 10, border: "1px solid #334155" }}>
+      <p style={{ color: "#94a3b8", marginBottom: 6 }}>😄 <strong style={{ color: "#e2e8f0" }}>Setup:</strong> {joke.setup}</p>
+      <p style={{ color: "#6366f1", fontWeight: 700 }}>🎯 {joke.punchline}</p>
     </div>
   );
 }
 
-// Función que devuelve una promesa simulada
-function fetchUser(userId) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: userId,
-        name: userId === "1" ? "Juan Pérez" : "María García",
-        email: userId === "1" ? "juan@ejemplo.com" : "maria@ejemplo.com"
-      });
-    }, 1500);
-  });
-}
+export default function Use({ isDark, onBack }) {
+  const text = isDark ? "#f1f5f9" : "#0f172a";
+  const sub = isDark ? "#94a3b8" : "#64748b";
 
-export default function Use() {
-  const navigate = useNavigate();
-  const [userId, setUserId] = useState("1");
-  
-  // Creamos una nueva promesa cada vez que cambia el userId
-  const userPromise = fetchUser(userId);
+  const [currentPromise, setCurrentPromise] = useState(fetchJoke());
 
   return (
-    <div style={{ maxWidth: 500, margin: "2rem auto", fontFamily: "sans-serif", padding: "2rem" }}>
-      <button onClick={() => navigate("/")}>← Volver al Home</button>
-      <h1>use</h1>
-      <p>Es un hook de React 19 que permite usar recursos asíncronos (promesas) directamente en componentes. Suspende el renderizado hasta que la promesa se resuelva.</p>
-      <hr />
-      <h3>Ejemplo: Cargar datos de usuario</h3>
-      
-      <div style={{ marginBottom: "1rem" }}>
-        <label style={{ display: "block", fontWeight: 600, marginBottom: "4px" }}>
-          Seleccionar usuario:
-        </label>
-        <select
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 6,
-            border: "1px solid #cbd5e1",
-            width: "100%",
-            fontSize: "1rem"
-          }}
-        >
-          <option value="1">Usuario 1 (Juan)</option>
-          <option value="2">Usuario 2 (María)</option>
-        </select>
+    <Header isDark={isDark} onBack={onBack} title="use" emoji="⚡" category="Utility" categoryColor="#a855f7">
+      <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
+        <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
+          <code style={{ color: "#a855f7" }}>use()</code> lee una Promise directamente en el render. Funciona con <code>Suspense</code> para manejar la carga.
+        </p>
+        <Suspense fallback={<div style={{ color: "#a855f7", textAlign: "center", padding: "2rem" }}>⏳ Cargando chiste...</div>}>
+          <JokeDisplay promise={currentPromise} />
+        </Suspense>
+        <button onClick={() => setCurrentPromise(fetchJoke())} style={{ marginTop: "1rem", padding: "8px 20px", borderRadius: 8, border: "1px solid #a855f7", background: "transparent", color: "#a855f7", fontWeight: 700, cursor: "pointer" }}>
+          🔄 Nuevo chiste
+        </button>
       </div>
-
-      {/* El componente UserProfile usa 'use' para esperar la promesa */}
-      <UserProfile userPromise={userPromise} />
-
-      <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "1rem" }}>
-        El hook <code>use</code> suspende el componente mientras la promesa está pendiente y muestra el contenido final cuando se resuelve. Es ideal para cargar datos de forma asíncrona.
-      </p>
-    </div>
+    </Header>
   );
 }
+
 

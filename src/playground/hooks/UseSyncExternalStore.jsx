@@ -1,57 +1,27 @@
 import { useSyncExternalStore } from "react";
-import { useNavigate } from "react-router-dom";
+import { themeStore } from "../utils/stores";
+import Header from "../utils/Header";
 
-// Store externo simple
-let listeners = [];
-let darkMode = false;
-
-const themeStore = {
-  subscribe(listener) {
-    listeners.push(listener);
-    return () => { listeners = listeners.filter(l => l !== listener); };
-  },
-  getSnapshot() {
-    return darkMode;
-  },
-  toggle() {
-    darkMode = !darkMode;
-    listeners.forEach(l => l());
-  },
-};
-
-export default function UseSyncExternalStore() {
-  const navigate = useNavigate();
-  const isDark = useSyncExternalStore(themeStore.subscribe, themeStore.getSnapshot);
+export default function UseSyncExternalStore({ isDark, onBack }) {
+  const text = isDark ? "#f1f5f9" : "#0f172a";
+  const sub = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#1e293b" : "#e2e8f0";
 
   return (
-    <div style={{
-      maxWidth: 500, margin: "2rem auto", fontFamily: "sans-serif", padding: "2rem",
-      background: isDark ? "#0f172a" : "#fff",
-      color: isDark ? "#f1f5f9" : "#0f172a",
-      borderRadius: 12, minHeight: "60vh", transition: "all 0.3s"
-    }}>
-      <button onClick={() => navigate("/")} style={{ color: isDark ? "#94a3b8" : "#475569" }}>
-        ← Volver al Home
-      </button>
-      <h1>useSyncExternalStore</h1>
-      <p>Permite suscribirse a un store externo (fuera de React) de forma segura y consistente entre el servidor y el cliente.</p>
-      <hr />
-      <h3>Ejemplo: Tema global desde un store externo</h3>
-      <p>Modo actual: <strong>{isDark ? "🌙 Oscuro" : "☀️ Claro"}</strong></p>
-      <button
-        onClick={themeStore.toggle}
-        style={{
-          padding: "10px 20px", borderRadius: 8, border: "none", cursor: "pointer",
-          background: isDark ? "#f1f5f9" : "#0f172a",
-          color: isDark ? "#0f172a" : "#f1f5f9",
-          fontWeight: 700
-        }}
-      >
-        Cambiar tema
-      </button>
-      <p style={{ fontSize: "0.85rem", color: isDark ? "#94a3b8" : "#64748b", marginTop: "1rem" }}>
-        El store vive fuera de React. <code>useSyncExternalStore</code> sincroniza el componente con él de forma segura.
-      </p>
-    </div>
+    <Header isDark={isDark} onBack={onBack} title="useSyncExternalStore" emoji="🔄" category="Utility" categoryColor="#3b82f6">
+      <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
+        <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
+          Se suscribe a un store externo fuera de React. El tema vive en una variable global y este hook lo sincroniza.
+        </p>
+        <div style={{ padding: "1.5rem", borderRadius: 12, background: isDark ? "#1e293b" : "#f1f5f9", border: `1px solid ${border}`, textAlign: "center" }}>
+          <div style={{ fontSize: "2.5rem", marginBottom: 8 }}>{isDark ? "🌙" : "☀️"}</div>
+          <div style={{ fontWeight: 700, color: text }}>Modo: {isDark ? "Oscuro" : "Claro"}</div>
+          <button onClick={themeStore.toggle} style={{ marginTop: "1rem", padding: "8px 20px", borderRadius: 8, border: "none", background: isDark ? "#f1f5f9" : "#0f172a", color: isDark ? "#0f172a" : "#f1f5f9", fontWeight: 700, cursor: "pointer" }}>
+            Cambiar tema
+          </button>
+        </div>
+        <p style={{ fontSize: "0.78rem", color: sub, marginTop: "1rem", fontFamily: "sans-serif" }}>💡 El store vive fuera del árbol de React. <code>useSyncExternalStore</code> lo conecta.</p>
+      </div>
+    </Header>
   );
 }

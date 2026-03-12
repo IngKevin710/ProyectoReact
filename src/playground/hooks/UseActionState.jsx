@@ -1,56 +1,40 @@
 import { useActionState } from "react";
-import { useNavigate } from "react-router-dom";
+import Header from "../utils/Header";
 
-async function enviarFormulario(prevState, formData) {
-  const nombre = formData.get("nombre");
-  await new Promise(r => setTimeout(r, 1500));
-  if (!nombre || nombre.trim().length < 3) {
-    return { error: "El nombre debe tener al menos 3 caracteres.", success: false };
-  }
-  return { error: null, success: true, nombre };
-}
+export default function UseActionState({ isDark, onBack }) {
+  const text = isDark ? "#f1f5f9" : "#0f172a";
+  const sub = isDark ? "#94a3b8" : "#64748b";
 
-export default function UseActionState() {
-  const navigate = useNavigate();
-  const [state, formAction, isPending] = useActionState(enviarFormulario, { error: null, success: false });
+  const [actionState, formAction, isPending] = useActionState(async (prev, data) => {
+    const nombre = data.get("nombre");
+    await new Promise(r => setTimeout(r, 1500));
+    if (!nombre || nombre.trim().length < 3) return { error: "Mínimo 3 caracteres.", success: false };
+    return { error: null, success: true, nombre };
+  }, { error: null, success: false });
 
   return (
-    <div style={{ maxWidth: 500, margin: "2rem auto", fontFamily: "sans-serif", padding: "2rem" }}>
-      <button onClick={() => navigate("/")}>← Volver al Home</button>
-      <h1>useActionState</h1>
-      <p>Gestiona el estado de una acción de formulario: el resultado anterior, si está pendiente, y el action para el form.</p>
-      <hr />
-      <h3>Ejemplo: Formulario con validación asíncrona</h3>
-
-      {state.success ? (
-        <div style={{ background: "#dcfce7", padding: "1rem", borderRadius: 8, color: "#166534" }}>
-          ✅ ¡Hola, <strong>{state.nombre}</strong>! Formulario enviado correctamente.
-        </div>
-      ) : (
-        <form action={formAction}>
-          <label style={{ display: "block", fontWeight: 600, marginBottom: 4 }}>Nombre:</label>
-          <input
-            name="nombre"
-            type="text"
-            placeholder="Escribe tu nombre..."
-            style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #cbd5e1", width: "100%", marginBottom: "0.75rem" }}
-          />
-          {state.error && (
-            <p style={{ color: "#dc2626", marginBottom: "0.5rem" }}>⚠️ {state.error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={isPending}
-            style={{
-              padding: "8px 20px", borderRadius: 6, border: "none",
-              background: isPending ? "#94a3b8" : "#0f172a",
-              color: "#fff", cursor: isPending ? "not-allowed" : "pointer", fontWeight: 600
-            }}
-          >
-            {isPending ? "Enviando..." : "Enviar"}
-          </button>
-        </form>
-      )}
-    </div>
+    <Header isDark={isDark} onBack={onBack} title="useActionState" emoji="📋" category="Form/Action" categoryColor="#ef4444">
+      <div style={{ color: text, fontFamily: "'IBM Plex Mono', monospace" }}>
+        <p style={{ color: sub, marginBottom: "1.5rem", fontFamily: "sans-serif" }}>
+          Gestiona el estado de una acción de formulario: resultado anterior, estado pendiente y action handler.
+        </p>
+        {actionState.success ? (
+          <div style={{ background: "#052e16", padding: "1.2rem", borderRadius: 10, border: "1px solid #16a34a", color: "#4ade80", fontFamily: "sans-serif" }}>
+            ✅ ¡Hola <strong>{actionState.nombre}</strong>! Formulario enviado con éxito.
+          </div>
+        ) : (
+          <form action={formAction}>
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", color: "#e2e8f0", fontWeight: 600, marginBottom: 4, fontFamily: "sans-serif" }}>Nombre:</label>
+              <input name="nombre" type="text" placeholder="Mínimo 3 caracteres..." style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #475569", width: "100%", background: "#1e293b", color: "#f1f5f9", boxSizing: "border-box", fontFamily: "sans-serif" }} />
+            </div>
+            {actionState.error && <p style={{ color: "#f87171", marginBottom: "0.75rem", fontFamily: "sans-serif" }}>⚠️ {actionState.error}</p>}
+            <button type="submit" disabled={isPending} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: isPending ? "#475569" : "#ef4444", color: "#fff", fontWeight: 700, cursor: isPending ? "not-allowed" : "pointer", fontFamily: "sans-serif" }}>
+              {isPending ? "⏳ Validando..." : "Enviar"}
+            </button>
+          </form>
+        )}
+      </div>
+    </Header>
   );
 }
