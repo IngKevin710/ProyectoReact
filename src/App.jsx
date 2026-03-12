@@ -15,25 +15,39 @@ import UseSyncExternalStore from "./playground/hooks/UseSyncExternalStore";
 import Use from "./playground/hooks/Use";
 import UseActionState from "./playground/hooks/UseActionState";
 import UseFormStatus from "./playground/hooks/UseFormStatus";
+import HookUseContext from "./playground/hooks/HookUseContext";
+import HookUseRef from "./playground/hooks/HookUseRef";
+import HookUseImperativeHandle from "./playground/hooks/HookUseImperativeHandle";
+import HookUseMemo from "./playground/hooks/HookUseMemo";
+import HookUseCallback from "./playground/hooks/HookUseCallback";
+import HookUseTransition from "./playground/hooks/HookUseTransition";
+import HookUseDeferredValue from "./playground/hooks/HookUseDeferredValue";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomeHooks />} />
-        <Route path="/usestate" element={<HookUseState />} />
-        <Route path="/usereducer" element={<HookUseReducer />} />
-        <Route path="/useeffect" element={<HookUseEffect />} />
-        <Route path="/uselayouteffect" element={<HookUseLayoutEffect />} />
-        <Route path="/useinsertioneffect" element={<HookUseInsertionEffect />} />
-        <Route path="/useoptimistic" element={<HookUseOptimistic />} />
-        <Route path="/usenavigate" element={<HookUseNavigate />} />
-        <Route path="/useid" element={<UseId />} />
-        <Route path="/usedebugvalue" element={<UseDebugValue />} />
-        <Route path="/usesyncexternalstore" element={<UseSyncExternalStore />} />
-        <Route path="/use" element={<Use />} />
-        <Route path="/useactionstate" element={<UseActionState />} />
-        <Route path="/useformstatus" element={<UseFormStatus />} />
+        <Route path="/hookusestate" element={<HookUseState />} />
+        <Route path="/hookuseducer" element={<HookUseReducer />} />
+        <Route path="/hookuseeffect" element={<HookUseEffect />} />
+        <Route path="/hookuselayouteffect" element={<HookUseLayoutEffect />} />
+        <Route path="/hookuseinsertioneffect" element={<HookUseInsertionEffect />} />
+        <Route path="/hookuseoptimistic" element={<HookUseOptimistic />} />
+        <Route path="/hookusenavigate" element={<HookUseNavigate />} />
+        <Route path="/hookuseid" element={<UseId />} />
+        <Route path="/hookusdebugvalue" element={<UseDebugValue />} />
+        <Route path="/hookusynxexternalstore" element={<UseSyncExternalStore />} />
+        <Route path="/hookuse" element={<Use />} />
+        <Route path="/hookuseactionstate" element={<UseActionState />} />
+        <Route path="/hookuseformstatus" element={<UseFormStatus />} />
+        <Route path="/hookusecontext" element={<HookUseContext />} />
+        <Route path="/hookuseref" element={<HookUseRef />} />
+        <Route path="/hookuseimperativehandle" element={<HookUseImperativeHandle />} />
+        <Route path="/hoikusememo" element={<HookUseMemo />} />
+        <Route path="/hoikusecallback" element={<HookUseCallback />} />
+        <Route path="/hookusetransition" element={<HookUseTransition />} />
+        <Route path="/hoikusedeferredvalue" element={<HookUseDeferredValue />} />
       </Routes>
     </BrowserRouter>
   );
