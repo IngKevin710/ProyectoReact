@@ -4,19 +4,26 @@ import { themeStore } from "./utils/stores";
 
 
 const hooks = [
-  { id: "useState",                emoji: "📌", category: "State",        color: "#8b5cf6" },
-  { id: "useReducer",             emoji: "🔀", category: "State",        color: "#7c3aed" },
-  { id: "useEffect",              emoji: "🔄", category: "Side Effect",  color: "#3b82f6" },
-  { id: "useLayoutEffect",        emoji: "🎨", category: "Side Effect",  color: "#06b6d4" },
-  { id: "useInsertionEffect",     emoji: "💉", category: "Side Effect",  color: "#10b981" },
-  { id: "useOptimistic",          emoji: "⚡", category: "Transition",   color: "#f59e0b" },
-  { id: "useNavigate",            emoji: "🧭", category: "Navigation",   color: "#ef4444" },
-  { id: "useId",                  emoji: "🪪", category: "Utility",      color: "#f59e0b" },
-  { id: "useDebugValue",          emoji: "🐛", category: "Utility",      color: "#10b981" },
-  { id: "useSyncExternalStore",   emoji: "🔗", category: "Utility",      color: "#3b82f6" },
-  { id: "use",                    emoji: "⚙️", category: "Utility",      color: "#a855f7" },
-  { id: "useActionState",         emoji: "📋", category: "Form/Action",  color: "#ef4444" },
-  { id: "useFormStatus",          emoji: "📡", category: "Form/Action",  color: "#ec4899" },
+  { id: "hookusestate",                emoji: "📌", category: "State",        color: "#8b5cf6" },
+  { id: "hookuseducer",             emoji: "🔀", category: "State",        color: "#7c3aed" },
+  { id: "hookuseeffect",              emoji: "🔄", category: "Side Effect",  color: "#3b82f6" },
+  { id: "hookuselayouteffect",        emoji: "🎨", category: "Side Effect",  color: "#06b6d4" },
+  { id: "hookuseinsertioneffect",     emoji: "💉", category: "Side Effect",  color: "#10b981" },
+  { id: "hookuseoptimistic",          emoji: "⚡", category: "Transition",   color: "#f59e0b" },
+  { id: "hookusenavigate",            emoji: "🧭", category: "Navigation",   color: "#ef4444" },
+  { id: "hookuseid",                  emoji: "🪪", category: "Utility",      color: "#f59e0b" },
+  { id: "hookusdebugvalue",          emoji: "🐛", category: "Utility",      color: "#10b981" },
+  { id: "hookusynxexternalstore",   emoji: "🔗", category: "Utility",      color: "#3b82f6" },
+  { id: "hookuse",                    emoji: "⚙️", category: "Utility",      color: "#a855f7" },
+  { id: "hookuseactionstate",         emoji: "📋", category: "Form/Action",  color: "#ef4444" },
+  { id: "hookuseformstatus",          emoji: "📡", category: "Form/Action",  color: "#ec4899" },
+  { id: "hookusecontext",             emoji: "🌍", category: "State",        color: "#ec4899" },
+  { id: "hookuseref",                 emoji: "📍", category: "Advanced",     color: "#06b6d4" },
+  { id: "hookuseimperativehandle",    emoji: "🎮", category: "Advanced",     color: "#f59e0b" },
+  { id: "hoikusememo",                emoji: "⚡", category: "Performance",   color: "#8b5cf6" },
+  { id: "hoikusecallback",            emoji: "🔗", category: "Performance",  color: "#a855f7" },
+  { id: "hookusetransition",          emoji: "⏳", category: "Concurrency",  color: "#06b6d4" },
+  { id: "hoikusedeferredvalue",       emoji: "📈", category: "Concurrency",  color: "#10b981" },
 ];
 
 export default function HomeHooks() {
@@ -36,7 +43,7 @@ export default function HomeHooks() {
       <div style={{ background: card, borderBottom: `1px solid ${border}`, padding: "1.5rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <span style={{ color: "#6366f1", fontWeight: 700, fontSize: "1.3rem" }}>⚛ React Hooks</span>
-          <p style={{ color: sub, margin: "4px 0 0", fontSize: "0.8rem" }}>Hooks #14–19 · Playground</p>
+          <p style={{ color: sub, margin: "4px 0 0", fontSize: "0.8rem" }}>Hooks #1–19 · Playground</p>
         </div>
         <div style={{ fontSize: "0.75rem", color: sub, background: isDark ? "#1e293b" : "#f1f5f9", padding: "4px 10px", borderRadius: 6 }}>
           {isDark ? "🌙 dark" : "☀️ light"}
@@ -61,19 +68,26 @@ export default function HomeHooks() {
               </div>
               <p style={{ color: sub, fontSize: "0.8rem", margin: 0, lineHeight: 1.5 }}>
                 {{
-                  useState: "Gestiona estado local en componentes funcionales.",
-                  useReducer: "Maneja lógica compleja de estado con dispatch.",
-                  useEffect: "Ejecuta efectos secundarios en componentes.",
-                  useLayoutEffect: "Ejecuta efectos antes de que el navegador pinte.",
-                  useInsertionEffect: "Inserta estilos dinámicos antes del layout.",
-                  useOptimistic: "Actualiza la UI mientras se procesa una acción.",
-                  useNavigate: "Navega entre rutas en aplicaciones con React Router.",
-                  useId: "Genera IDs únicos para vincular labels con inputs.",
-                  useDebugValue: "Etiqueta hooks personalizados en React DevTools.",
-                  useSyncExternalStore: "Se suscribe a stores externos fuera del árbol de React.",
-                  use: "Lee Promises directamente en el render con Suspense.",
-                  useActionState: "Gestiona estado, pendiente y resultado de acciones de form.",
-                  useFormStatus: "Lee el estado del formulario padre desde un componente hijo.",
+                  hookusestate: "Gestiona estado local en componentes funcionales.",
+                  hookuseducer: "Maneja lógica compleja de estado con dispatch.",
+                  hookuseeffect: "Ejecuta efectos secundarios en componentes.",
+                  hookuselayouteffect: "Ejecuta efectos antes de que el navegador pinte.",
+                  hookuseinsertioneffect: "Inserta estilos dinámicos antes del layout.",
+                  hookuseoptimistic: "Actualiza la UI mientras se procesa una acción.",
+                  hookusenavigate: "Navega entre rutas en aplicaciones con React Router.",
+                  hookuseid: "Genera IDs únicos para vincular labels con inputs.",
+                  hookusdebugvalue: "Etiqueta hooks personalizados en React DevTools.",
+                  hookusynxexternalstore: "Se suscribe a stores externos fuera del árbol de React.",
+                  hookuse: "Lee Promises directamente en el render con Suspense.",
+                  hookuseactionstate: "Gestiona estado, pendiente y resultado de acciones de form.",
+                  hookuseformstatus: "Lee el estado del formulario padre desde un componente hijo.",
+                  hookusecontext: "Accede a valores compartidos sin prop drilling.",
+                  hookuseref: "Persiste un valor mutable entre renders sin causar re-renders.",
+                  hookuseimperativehandle: "Personaliza la instancia expuesta por forwardRef.",
+                  hoikusememo: "Memoriza un valor calculado para evitar recálculos costosos.",
+                  hoikusecallback: "Memoriza una función para evitar re-renders innecesarios.",
+                  hookusetransition: "Marca actualizaciones como no urgentes para mantener responsividad.",
+                  hoikusedeferredvalue: "Diferencia un valor para mantener la UI responsiva.",
                 }[h.id]}
               </p>
               <div style={{ marginTop: "1rem", color: h.color, fontSize: "0.8rem", fontWeight: 600 }}>Ver ejercicio →</div>
