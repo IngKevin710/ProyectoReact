@@ -7,7 +7,7 @@
 | --------------- | ------ |---------------------------------------------------------------------------------------------- |
 | Kevin Peñaranda | 192212 |useCallback, useContext, useDeferredValue, useImperativeHandle, useMemo, useRef, useTransition |
 | Diego Rodriguez | 192269 |useState, useReducer, useOptimistic, useEffect, useLayoutEffect, useInsertionEffect             |
-| Estudiante 3    |        |                                                                                               |
+|  Luisa Ovallos | 192245  | useId, useDebugValue, useSyncExternalStore, use, useActionState, useFormStatus |
 
 ---
 
@@ -124,18 +124,49 @@ En este ejercicio utilicé useInsertionEffect para inyectar estilos CSS dinámic
 
 ---
 
-## 👨‍💻 Estudiante 3
+## 👨‍💻 Luisa Fernanda Ovallos Carrascal
 
 ### Hooks desarrollados
 
-*
-
-### Explicación del ejercicio
-
-*(Explicación del estudiante)*
-
+* useId
+* useDebugValue
+* useSyncExternalStore
+* use
+* useActionState
+* useFormStatus
 
 ---
+
+**useId**
+
+En este ejercicio utilicé useId para generar identificadores únicos automáticamente. Lo que hice fue crear un formulario de registro con tres campos: nombre, correo y contraseña. Cada campo recibe un ID único generado por este hook, lo que permite conectar correctamente el label con su input sin tener que inventar nombres de ID manualmente ni preocuparme por colisiones cuando el componente se reutiliza.
+
+
+**useDebugValue**
+
+Para este ejercicio utilicé useDebugValue para agregar una etiqueta visible en React DevTools a un hook personalizado. Creé un hook llamado useOnlineStatus que detecta si el usuario tiene conexión a internet. Con useDebugValue logré que en las DevTools aparezca un mensaje claro que indica si está conectado o desconectado, facilitando el proceso de depuración sin afectar nada en la interfaz.
+
+
+**useSyncExternalStore**
+
+En este caso utilicé useSyncExternalStore para conectar React con un store que vive completamente fuera del árbol de componentes. Creé un store global que controla el tema de la aplicación entre modo claro y oscuro. Gracias a este hook, el componente se suscribe al store y se actualiza automáticamente cada vez que el tema cambia, de forma segura y sin inconsistencias.
+
+
+**use**
+
+Para este ejercicio utilicé el hook use para leer una Promise directamente dentro del renderizado. Lo implementé cargando chistes desde una API externa. En lugar de usar useEffect y useState para manejar la carga, simplemente paso la Promise al hook y React espera la respuesta usando Suspense. También agregué un botón para recargar y obtener un nuevo chiste.
+
+
+**useActionState**
+
+En este ejercicio utilicé useActionState para gestionar el estado completo de un formulario con acción asíncrona. Creé un formulario que valida el nombre ingresado. Este hook me dio tres cosas: el resultado de la última acción, si está pendiente y el handler para el form. Mientras procesa muestra un mensaje de carga, si hay error lo muestra en rojo y si todo sale bien muestra un mensaje de éxito con el nombre ingresado.
+
+
+**useFormStatus**
+
+Para este ejemplo utilicé useFormStatus para leer el estado del formulario padre desde un componente hijo. Creé un botón de submit como componente separado llamado SubmitButton que usa este hook internamente. Cuando el formulario está siendo procesado, el botón se deshabilita automáticamente y cambia su texto a "Enviando...", sin necesidad de manejar ese estado manualmente desde el componente padre. Los comentarios enviados se acumulan en una lista visible debajo del formulario.
+
+
 
 # 📚 Tabla General de React Hooks
 
