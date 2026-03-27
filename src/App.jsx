@@ -22,12 +22,16 @@ import HookUseMemo from "./playground/hooks/HookUseMemo";
 import HookUseCallback from "./playground/hooks/HookUseCallback";
 import HookUseTransition from "./playground/hooks/HookUseTransition";
 import HookUseDeferredValue from "./playground/hooks/HookUseDeferredValue";
+import LoginPage from "./pages/LoginPage";
+import RegistroUsuario from "./pages/RegistroUsuario";
+import ForgotPage from "./pages/ForgotPage";
+import ResetPasswordPage from "./pages/ResetPage"; 
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomeHooks />} />
+        <Route path="/home" element={<HomeHooks />} />
         <Route path="/hookusestate" element={<HookUseState />} />
         <Route path="/hookuseducer" element={<HookUseReducer />} />
         <Route path="/hookuseeffect" element={<HookUseEffect />} />
@@ -48,6 +52,10 @@ function App() {
         <Route path="/hoikusecallback" element={<HookUseCallback />} />
         <Route path="/hookusetransition" element={<HookUseTransition />} />
         <Route path="/hoikusedeferredvalue" element={<HookUseDeferredValue />} />
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/registrousuario" element={<RegistroUsuario />} />
+        <Route path="/forgot" element={<ForgotPage />} />
+        <Route path="/reset" element={<ResetPasswordPage />} />
       </Routes>
     </BrowserRouter>
   );
