@@ -151,7 +151,7 @@ export default function ForgotPage() {
 
                 {/* VOLVER AL LOGIN */}
                 <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                    <Link to="/login" style={{ fontSize: 12, color: "#6366f1", textDecoration: "none" }}>
+                    <Link to="/" style={{ fontSize: 12, color: "#6366f1", textDecoration: "none" }}>
                         Volver al inicio de sesión
                     </Link>
                 </div>

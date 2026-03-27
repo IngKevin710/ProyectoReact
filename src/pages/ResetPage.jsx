@@ -246,7 +246,7 @@ export default function ResetPage() {
             </p>
 
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/")}
               style={{
                 marginTop: "1rem",
                 padding: "8px 16px",

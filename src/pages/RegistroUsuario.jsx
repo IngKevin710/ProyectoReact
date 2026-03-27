@@ -388,7 +388,7 @@ export default function Register() {
 
               <button
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/")}
                 style={{
                     width: "100%",
                     padding: "11px",

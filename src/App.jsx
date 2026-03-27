@@ -31,7 +31,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomeHooks />} />
+        <Route path="/home" element={<HomeHooks />} />
         <Route path="/hookusestate" element={<HookUseState />} />
         <Route path="/hookuseducer" element={<HookUseReducer />} />
         <Route path="/hookuseeffect" element={<HookUseEffect />} />
@@ -52,7 +52,7 @@ function App() {
         <Route path="/hoikusecallback" element={<HookUseCallback />} />
         <Route path="/hookusetransition" element={<HookUseTransition />} />
         <Route path="/hoikusedeferredvalue" element={<HookUseDeferredValue />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<LoginPage />} />
         <Route path="/registrousuario" element={<RegistroUsuario />} />
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/reset" element={<ResetPasswordPage />} />
