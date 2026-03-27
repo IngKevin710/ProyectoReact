@@ -1,10 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function ForgotPage() {
 
   const [form, setForm] = useState({ email: "" });
 
   const [errors, setErrors] = useState({});
+
+  const navigate = useNavigate();
 
   const [showModal, setShowModal] = useState(false);
 
@@ -118,6 +122,8 @@ export default function ForgotPage() {
                     border: errors.email
                       ? "1px solid red"
                       : "1px solid #e2e8f0",
+                    background: "#f8fafc",
+                    color: "#1a1035",
                   }}
                 />
 
@@ -143,12 +149,13 @@ export default function ForgotPage() {
                 Enviar enlace →
               </button>
 
-              {/* VOLVER AL LOGIN */}
-              <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                <a href="" style={{ fontSize: 12 }}>
-                  Volver al inicio de sesión
-                </a>
-              </div>
+                {/* VOLVER AL LOGIN */}
+                <div style={{ marginTop: "1rem", textAlign: "center" }}>
+                    <Link to="/login" style={{ fontSize: 12, color: "#6366f1", textDecoration: "none" }}>
+                        Volver al inicio de sesión
+                    </Link>
+                </div>
+
 
             </form>
           </div>
@@ -183,7 +190,7 @@ export default function ForgotPage() {
             <strong>{form.email}</strong>
 
             <button
-              onClick={() => setShowModal(false)}
+              onClick={() => navigate("/reset")}
               style={{
                 marginTop: "1rem",
                 marginLeft: "0.5rem",
