@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -8,6 +9,7 @@ export default function Register() {
     password: "",
     confirmar: "",
   });
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -384,18 +386,33 @@ export default function Register() {
                 <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
               </div>
 
-              <a href="/login" style={{ textDecoration: "none" }}>
-                <button
-                  type="button"
-                  style={{
-                    width: "100%", padding: 10, borderRadius: 8,
-                    border: "0.5px solid #e2e8f0", background: "transparent",
-                    color: "#64748b", fontSize: 14, cursor: "pointer",
-                  }}
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                style={{
+                    width: "100%",
+                    padding: "11px",
+                    borderRadius: 8,
+                    border: "0.5px solid #e2e8f0",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.background = "#f8fafc";
+                    e.currentTarget.style.border = "0.5px solid #cbd5f5";
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.background = "#ffffff";
+                    e.currentTarget.style.border = "0.5px solid #e2e8f0";
+                }}
                 >
-                  Iniciar sesión
+                Iniciar sesión
                 </button>
-              </a>
             </form>
           </div>
         </div>

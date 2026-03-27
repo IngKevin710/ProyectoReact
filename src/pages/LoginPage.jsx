@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Componente principal de la página de login
 // Acá manejo todo el formulario, las validaciones y el modal de confirmación
 export default function LoginPage() {
-
+  const navigate = useNavigate();
   // Guardo los dos campos del formulario en un solo estado
   // así es más limpio que tener un useState por cada campo
   const [form, setForm] = useState({ email: "", password: "" });
@@ -390,9 +391,18 @@ export default function LoginPage() {
 
               {/* Link para ir a recuperar contraseña */}
               <div style={{ textAlign: "right", marginBottom: "1.5rem" }}>
-                <a href="/forgot" style={{ fontSize: 12, color: "#6366f1", textDecoration: "none" }}>
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#6366f1",
+                    cursor: "pointer",
+                    fontSize: 12
+                  }}>
                   ¿Olvidaste tu contraseña?
-                </a>
+                </button>
               </div>
 
               {/* Botón principal de submit */}
@@ -430,23 +440,21 @@ export default function LoginPage() {
               </div>
 
               {/* Botón secundario para ir a la página de registro */}
-              <a href="/register" style={{ textDecoration: "none" }}>
-                <button
-                  type="button"
-                  style={{
-                    width: "100%",
-                    padding: 10,
-                    borderRadius: 8,
-                    border: "0.5px solid #e2e8f0",
-                    background: "transparent",
-                    color: "#64748b",
-                    fontSize: 14,
-                    cursor: "pointer",
-                  }}
-                >
-                  Crear cuenta nueva
-                </button>
-              </a>
+              <button
+                type="button"
+                onClick={() => navigate("/registrousuario")}
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "0.5px solid #e2e8f0",
+                  background: "transparent",
+                  color: "#64748b",
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}>
+                Crear cuenta nueva
+              </button>
             </form>
           </div>
         </div>

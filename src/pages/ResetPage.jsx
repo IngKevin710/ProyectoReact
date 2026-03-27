@@ -8,7 +8,7 @@ export default function ResetPage() {
     confirmPassword: "",
   });
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
