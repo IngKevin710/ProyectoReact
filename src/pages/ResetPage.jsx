@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function ResetPage() {
 
@@ -6,6 +7,8 @@ export default function ResetPage() {
     password: "",
     confirmPassword: "",
   });
+
+    const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
@@ -243,7 +246,7 @@ export default function ResetPage() {
             </p>
 
             <button
-              onClick={() => setShowModal(false)}
+              onClick={() => navigate("/login")}
               style={{
                 marginTop: "1rem",
                 padding: "8px 16px",
