@@ -22,6 +22,7 @@ import HookUseMemo from "./playground/hooks/HookUseMemo";
 import HookUseCallback from "./playground/hooks/HookUseCallback";
 import HookUseTransition from "./playground/hooks/HookUseTransition";
 import HookUseDeferredValue from "./playground/hooks/HookUseDeferredValue";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
         <Route path="/hoikusecallback" element={<HookUseCallback />} />
         <Route path="/hookusetransition" element={<HookUseTransition />} />
         <Route path="/hoikusedeferredvalue" element={<HookUseDeferredValue />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
   );
