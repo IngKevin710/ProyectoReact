@@ -23,6 +23,7 @@ import HookUseCallback from "./playground/hooks/HookUseCallback";
 import HookUseTransition from "./playground/hooks/HookUseTransition";
 import HookUseDeferredValue from "./playground/hooks/HookUseDeferredValue";
 import LoginPage from "./pages/LoginPage";
+import RegistroUsuario from "./pages/RegistroUsuario";
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
         <Route path="/hookusetransition" element={<HookUseTransition />} />
         <Route path="/hoikusedeferredvalue" element={<HookUseDeferredValue />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/registrousuario" element={<RegistroUsuario />} />
       </Routes>
     </BrowserRouter>
   );
