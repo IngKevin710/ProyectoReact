@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import app from "../firebase";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+
+const auth = getAuth(app);
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -60,15 +65,51 @@ export default function Register() {
     setTouched({ ...touched, [e.target.name]: true });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setTouched({ nombre: true, apellido: true, email: true, password: true, confirmar: true });
       return;
     }
-    setShowModal(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password
+      );
+
+      const user = userCredential.user;
+
+      const db = getFirestore(app);
+
+      await setDoc(doc(db, "users", user.uid), {
+        nombre: form.nombre,
+        apellido: form.apellido,
+        email: form.email,
+        createdAt: new Date()
+      });
+
+      setShowModal(true);
+
+    } catch (error) {
+      console.log(error);
+
+      let errorMsg = "Error al registrar";
+
+      if (error.code === "auth/email-already-in-use") {
+        errorMsg = "El correo ya está registrado";
+      } else if (error.code === "auth/invalid-email") {
+        errorMsg = "Correo inválido";
+      } else if (error.code === "auth/weak-password") {
+        errorMsg = "La contraseña es muy débil";
+      }
+
+      setErrors({ email: errorMsg });
+    }
   };
 
   // ── Helpers de estilo ────────────────────────────────────────
