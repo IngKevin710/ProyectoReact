@@ -1,10 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import app from "../firebase";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider } from "firebase/auth";
+
+const auth = getAuth(app);
 
 // Componente principal de la página de login
 // Acá manejo todo el formulario, las validaciones y el modal de confirmación
 export default function LoginPage() {
   const navigate = useNavigate();
+
+  const socialBtn = {
+    width: 55,
+    height: 55,
+    borderRadius: "50%",
+    border: "1px solid #e2e8f0",
+    background: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+    transition: "all 0.2s ease",
+  };
   // Guardo los dos campos del formulario en un solo estado
   // así es más limpio que tener un useState por cada campo
   const [form, setForm] = useState({ email: "", password: "" });
@@ -55,14 +73,57 @@ export default function LoginPage() {
   // Cuando el usuario hace clic en "Iniciar sesión"
   // primero valido, si hay errores los muestro y me detengo
   // si todo está bien, abro el modal con los datos ingresados
-  const handleSubmit = (e) => {
-    e.preventDefault(); // evito que la página se recargue
+
+  // 🔐 Login normal con email/password
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-    setShowModal(true);
+
+    try {
+      await signInWithEmailAndPassword(auth, form.email, form.password);
+      navigate("/dashboard");
+    } catch (error) {
+      console.log(error);
+      setErrors({ email: "Credenciales incorrectas" });
+    }
+  };
+
+  // 🔵 Google
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate("/dashboard");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // 🐱 GitHub
+  const handleGithubLogin = async () => {
+    try {
+      const provider = new GithubAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate("/dashboard");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // 🔵 Facebook
+  const handleFacebookLogin = async () => {
+    try {
+      const provider = new FacebookAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate("/dashboard");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -423,7 +484,55 @@ export default function LoginPage() {
                 Iniciar sesión →
               </button>
 
+              {/* Separador */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                margin: "1.5rem 0",
+              }}>
+                <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+                <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                  o continúa con
+                </span>
+                <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+              </div>
+
+              {/* BOTONES SOCIALES */}
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 16,
+              }}>
+
+                {/* GOOGLE */}
+                <button type="button" onClick={handleGoogleLogin} style={socialBtn}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28" height="28">
+                    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10.4 0 19-7.6 19-20 0-1.3-.1-2.5-.4-3.5z" />
+                    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.1 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z" />
+                    <path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.6-5.3l-6.3-5.2C29.3 35.5 26.8 36 24 36c-5.4 0-9.9-3.3-11.7-8l-6.5 5C9.2 39.5 16 44 24 44z" />
+                    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3-3.5 5.3-6.5 6.5l6.3 5.2C38.5 36.1 44 29.9 44 20c0-1.3-.1-2.5-.4-3.5z" />
+                  </svg>
+                </button>
+
+                {/* GITHUB */}
+                <button type="button" onClick={handleGithubLogin} style={socialBtn}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="#000">
+                    <path d="M12 .5C5.7.5.9 5.3.9 11.6c0 5 3.2 9.2 7.7 10.7.6.1.8-.3.8-.6v-2.2c-3.1.7-3.7-1.5-3.7-1.5-.5-1.2-1.1-1.6-1.1-1.6-.9-.6.1-.6.1-.6 1 .1 1.6 1 1.6 1 .9 1.5 2.4 1.1 3 .9.1-.6.4-1.1.7-1.4-2.5-.3-5.2-1.3-5.2-5.7 0-1.2.4-2.2 1-3-.1-.3-.4-1.4.1-2.9 0 0 .8-.3 2.9 1.1.8-.2 1.7-.3 2.6-.3s1.8.1 2.6.3c2.1-1.4 2.9-1.1 2.9-1.1.5 1.5.2 2.6.1 2.9.6.8 1 1.8 1 3 0 4.4-2.7 5.3-5.3 5.6.4.4.8 1 .8 2v3c0 .3.2.7.8.6 4.5-1.5 7.7-5.7 7.7-10.7C23.1 5.3 18.3.5 12 .5z" />
+                  </svg>
+                </button>
+
+                {/* FACEBOOK */}
+                <button type="button" onClick={handleFacebookLogin} style={socialBtn}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="#1877f2">
+                    <path d="M22 12a10 10 0 1 0-11.5 9.87v-6.99H7.9V12h2.6V9.8c0-2.56 1.52-3.98 3.85-3.98 1.11 0 2.27.2 2.27.2v2.5h-1.28c-1.26 0-1.65.78-1.65 1.58V12h2.8l-.45 2.88h-2.35v6.99A10 10 0 0 0 22 12z" />
+                  </svg>
+                </button>
+
+              </div>
+
               {/* Separador visual entre los dos botones */}
+              
               <div
                 style={{
                   display: "flex",

@@ -149,7 +149,7 @@ export default function Register() {
         createdAt: new Date(),
       });
 
-      setShowModal(true);
+      navigate("/dashboard");
     } catch (error) {
       console.log(error);
       setErrors({ email: "Error al autenticar con Google" });
