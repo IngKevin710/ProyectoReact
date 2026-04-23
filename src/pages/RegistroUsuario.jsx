@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import app from "../firebase";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { getDoc } from "firebase/firestore";
 
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -60,35 +61,64 @@ export default function Register() {
     return newErrors;
   };
 
+// ── Autenticación con Google ─────────────────────────────────
   const loginWithGithub = async () => {
-  const provider = new GithubAuthProvider();
+    const provider = new GithubAuthProvider();
 
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-    // 🔥 verificar si ya existe en Firestore
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
+      // 🔥 verificar si ya existe en Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
 
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        nombre: user.displayName || "",
-        email: user.email,
-        createdAt: new Date(),
-        provider: "github"
-      });
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          nombre: user.displayName || "",
+          email: user.email,
+          createdAt: new Date(),
+          provider: "github"
+        });
+      }
+
+      console.log("Login GitHub OK:", user);
+
+      // opcional: redirigir
+      navigate("/dashboard");
+
+    } catch (error) {
+      console.log(error);
     }
+  };
+  
+  // ── Autenticación con Facebook ─────────────────────────────────
+  const loginWithFacebook = async () => {
+    const provider = new FacebookAuthProvider();
 
-    console.log("Login GitHub OK:", user);
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-    // opcional: redirigir
-    navigate("/dashboard");
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
 
-  } catch (error) {
-    console.log(error);
-  }
-};
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          nombre: user.displayName || "",
+          email: user.email,
+          createdAt: new Date(),
+          provider: "facebook"
+        });
+      }
+
+      console.log("Login Facebook OK:", user);
+      navigate("/dashboard");
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // ── Autenticación con Google ─────────────────────────────────
   const handleGoogleSignIn = async () => {
