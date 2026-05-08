@@ -1,13 +1,24 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import app from "../firebase";
-import { registrarSesion } from "../services/historialService"; 
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { registrarSesion } from "../services/historialService";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider, updateProfile } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+
+const db = getFirestore(app);
 
 const auth = getAuth(app);
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [resetToast, setResetToast] = useState(searchParams.get("reset") === "success");
+
+  useEffect(() => {
+    if (!resetToast) return;
+    const id = setTimeout(() => setResetToast(false), 5000);
+    return () => clearTimeout(id);
+  }, [resetToast]);
 
   const socialBtn = {
     width: 55,
@@ -27,11 +38,8 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // 👇 NUEVO — estados para el modal de nombre/apellido
-  const [showNombreModal, setShowNombreModal] = useState(false);
-  const [nombreForm, setNombreForm]           = useState({ nombre: "", apellido: "" });
-  const [pendingLogin, setPendingLogin]       = useState(false);
+  const [socialError, setSocialError] = useState("");
+  const [socialLoading, setSocialLoading] = useState("");
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -55,7 +63,6 @@ export default function LoginPage() {
     setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  // 🔐 MODIFICADO — ahora abre el modal de nombre en vez de navegar directo
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
@@ -64,69 +71,71 @@ export default function LoginPage() {
       return;
     }
     try {
-      await signInWithEmailAndPassword(auth, form.email, form.password);
-      setShowNombreModal(true); // abre modal para pedir nombre y apellido
+      const credential = await signInWithEmailAndPassword(auth, form.email, form.password);
+      const snap = await getDoc(doc(db, "users", credential.user.uid));
+      const data = snap.data() || {};
+      await registrarSesion(data.nombre || "Sin nombre", data.apellido || "Sin apellido", "email", credential.user.uid);
+      navigate("/perfil");
     } catch (error) {
-      console.log(error);
       setErrors({ email: "Credenciales incorrectas" });
     }
   };
 
-  // confirma nombre/apellido y registra la sesión
-  const handleConfirmarNombre = async () => {
-    const nombre   = nombreForm.nombre.trim()   || "Sin nombre";
-    const apellido = nombreForm.apellido.trim() || "Sin apellido";
-    setPendingLogin(true);
-    await registrarSesion(nombre, apellido, "email");
-    setPendingLogin(false);
-    setShowNombreModal(false);
-    navigate("/perfil");
+  const SOCIAL_ERROR_MESSAGES = {
+    "auth/popup-closed-by-user":                    null,
+    "auth/cancelled-popup-request":                 null,
+    "auth/popup-blocked":                           "El navegador bloqueó la ventana emergente. Permite ventanas emergentes e intenta de nuevo.",
+    "auth/account-exists-with-different-credential":"Este correo ya está registrado con otro método de inicio de sesión.",
+    "auth/network-request-failed":                  "Error de red. Verifica tu conexión e intenta de nuevo.",
+    "auth/user-disabled":                           "Esta cuenta ha sido deshabilitada.",
   };
 
-  // 🔵 MODIFICADO — Google
-  const handleGoogleLogin = async () => {
+  const handleSocialLogin = async (provider, metodo) => {
+    setSocialError("");
+    setSocialLoading(metodo);
     try {
-      const provider = new GoogleAuthProvider();
       const result   = await signInWithPopup(auth, provider);
-      const parts    = (result.user.displayName || "").split(" ");
+      const { uid, displayName, email } = result.user;
+      const parts    = (displayName || "").split(" ").filter(Boolean);
       const nombre   = parts[0]                  || "Sin nombre";
       const apellido = parts.slice(1).join(" ") || "Sin apellido";
-      await registrarSesion(nombre, apellido, "google");
+
+      // Para Facebook, construir URL de foto confiable con el access token.
+      // Se usa la URL base (sin query string) para evitar duplicar el token en logins sucesivos.
+      let photoURL = result.user.photoURL || "";
+      if (metodo === "facebook" && photoURL) {
+        const fbCredential = FacebookAuthProvider.credentialFromResult(result);
+        if (fbCredential?.accessToken) {
+          const baseURL = photoURL.split("?")[0];
+          photoURL = `${baseURL}?access_token=${fbCredential.accessToken}`;
+          await updateProfile(result.user, { photoURL });
+        }
+      }
+
+      // Guardar en users si es la primera vez; refrescar foto de Facebook en cada login
+      const userRef = doc(db, "users", uid);
+      const snap    = await getDoc(userRef);
+      if (!snap.exists()) {
+        await setDoc(userRef, { nombre, apellido, email: email || "", provider: metodo, photoURL, createdAt: new Date() });
+      } else if (metodo === "facebook" && photoURL) {
+        await setDoc(userRef, { photoURL }, { merge: true });
+      }
+
+      await registrarSesion(nombre, apellido, metodo, uid);
       navigate("/perfil");
     } catch (error) {
-      console.log(error);
+      const mensaje = SOCIAL_ERROR_MESSAGES[error.code];
+      if (mensaje !== null) {
+        setSocialError(mensaje ?? "No se pudo iniciar sesión. Intenta de nuevo.");
+      }
+    } finally {
+      setSocialLoading("");
     }
   };
 
-  // 🐱 MODIFICADO — GitHub
-  const handleGithubLogin = async () => {
-    try {
-      const provider = new GithubAuthProvider();
-      const result   = await signInWithPopup(auth, provider);
-      const parts    = (result.user.displayName || "").split(" ");
-      const nombre   = parts[0]                  || "Sin nombre";
-      const apellido = parts.slice(1).join(" ") || "Sin apellido";
-      await registrarSesion(nombre, apellido, "github");
-      navigate("/perfil");
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // 🔵 MODIFICADO — Facebook
-  const handleFacebookLogin = async () => {
-    try {
-      const provider = new FacebookAuthProvider();
-      const result   = await signInWithPopup(auth, provider);
-      const parts    = (result.user.displayName || "").split(" ");
-      const nombre   = parts[0]                  || "Sin nombre";
-      const apellido = parts.slice(1).join(" ") || "Sin apellido";
-      await registrarSesion(nombre, apellido, "facebook");
-      navigate("/perfil");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const handleGoogleLogin   = () => handleSocialLogin(new GoogleAuthProvider(),   "google");
+  const handleGithubLogin   = () => handleSocialLogin(new GithubAuthProvider(),   "github");
+  const handleFacebookLogin = () => handleSocialLogin(new FacebookAuthProvider(), "facebook");
 
   return (
     <div
@@ -140,6 +149,14 @@ export default function LoginPage() {
         padding: "1rem",
       }}
     >
+      {/* TOAST — contraseña restablecida */}
+      {resetToast && (
+        <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", zIndex: 2000, background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "12px 20px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}>
+          <span style={{ fontSize: 18 }}>✅</span>
+          <span style={{ fontSize: 13, color: "#166534", fontWeight: 500 }}>Contraseña actualizada correctamente. Ya puedes iniciar sesión.</span>
+        </div>
+      )}
+
       <div
         style={{
           display: "flex",
@@ -233,25 +250,45 @@ export default function LoginPage() {
               </div>
 
               <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
-                <button type="button" onClick={handleGoogleLogin} style={socialBtn}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28" height="28">
-                    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10.4 0 19-7.6 19-20 0-1.3-.1-2.5-.4-3.5z" />
-                    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.1 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z" />
-                    <path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.6-5.3l-6.3-5.2C29.3 35.5 26.8 36 24 36c-5.4 0-9.9-3.3-11.7-8l-6.5 5C9.2 39.5 16 44 24 44z" />
-                    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3-3.5 5.3-6.5 6.5l6.3 5.2C38.5 36.1 44 29.9 44 20c0-1.3-.1-2.5-.4-3.5z" />
-                  </svg>
+                <button type="button" onClick={handleGoogleLogin} disabled={!!socialLoading}
+                  style={{ ...socialBtn, opacity: socialLoading === "google" ? 0.6 : 1 }}
+                  title="Continuar con Google">
+                  {socialLoading === "google"
+                    ? <span style={{ fontSize: 18 }}>⏳</span>
+                    : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28" height="28">
+                        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10.4 0 19-7.6 19-20 0-1.3-.1-2.5-.4-3.5z" />
+                        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.1 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z" />
+                        <path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.6-5.3l-6.3-5.2C29.3 35.5 26.8 36 24 36c-5.4 0-9.9-3.3-11.7-8l-6.5 5C9.2 39.5 16 44 24 44z" />
+                        <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3-3.5 5.3-6.5 6.5l6.3 5.2C38.5 36.1 44 29.9 44 20c0-1.3-.1-2.5-.4-3.5z" />
+                      </svg>
+                  }
                 </button>
-                <button type="button" onClick={handleGithubLogin} style={socialBtn}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="#000">
-                    <path d="M12 .5C5.7.5.9 5.3.9 11.6c0 5 3.2 9.2 7.7 10.7.6.1.8-.3.8-.6v-2.2c-3.1.7-3.7-1.5-3.7-1.5-.5-1.2-1.1-1.6-1.1-1.6-.9-.6.1-.6.1-.6 1 .1 1.6 1 1.6 1 .9 1.5 2.4 1.1 3 .9.1-.6.4-1.1.7-1.4-2.5-.3-5.2-1.3-5.2-5.7 0-1.2.4-2.2 1-3-.1-.3-.4-1.4.1-2.9 0 0 .8-.3 2.9 1.1.8-.2 1.7-.3 2.6-.3s1.8.1 2.6.3c2.1-1.4 2.9-1.1 2.9-1.1.5 1.5.2 2.6.1 2.9.6.8 1 1.8 1 3 0 4.4-2.7 5.3-5.3 5.6.4.4.8 1 .8 2v3c0 .3.2.7.8.6 4.5-1.5 7.7-5.7 7.7-10.7C23.1 5.3 18.3.5 12 .5z" />
-                  </svg>
+                <button type="button" onClick={handleGithubLogin} disabled={!!socialLoading}
+                  style={{ ...socialBtn, opacity: socialLoading === "github" ? 0.6 : 1 }}
+                  title="Continuar con GitHub">
+                  {socialLoading === "github"
+                    ? <span style={{ fontSize: 18 }}>⏳</span>
+                    : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="#000">
+                        <path d="M12 .5C5.7.5.9 5.3.9 11.6c0 5 3.2 9.2 7.7 10.7.6.1.8-.3.8-.6v-2.2c-3.1.7-3.7-1.5-3.7-1.5-.5-1.2-1.1-1.6-1.1-1.6-.9-.6.1-.6.1-.6 1 .1 1.6 1 1.6 1 .9 1.5 2.4 1.1 3 .9.1-.6.4-1.1.7-1.4-2.5-.3-5.2-1.3-5.2-5.7 0-1.2.4-2.2 1-3-.1-.3-.4-1.4.1-2.9 0 0 .8-.3 2.9 1.1.8-.2 1.7-.3 2.6-.3s1.8.1 2.6.3c2.1-1.4 2.9-1.1 2.9-1.1.5 1.5.2 2.6.1 2.9.6.8 1 1.8 1 3 0 4.4-2.7 5.3-5.3 5.6.4.4.8 1 .8 2v3c0 .3.2.7.8.6 4.5-1.5 7.7-5.7 7.7-10.7C23.1 5.3 18.3.5 12 .5z" />
+                      </svg>
+                  }
                 </button>
-                <button type="button" onClick={handleFacebookLogin} style={socialBtn}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="#1877f2">
-                    <path d="M22 12a10 10 0 1 0-11.5 9.87v-6.99H7.9V12h2.6V9.8c0-2.56 1.52-3.98 3.85-3.98 1.11 0 2.27.2 2.27.2v2.5h-1.28c-1.26 0-1.65.78-1.65 1.58V12h2.8l-.45 2.88h-2.35v6.99A10 10 0 0 0 22 12z" />
-                  </svg>
+                <button type="button" onClick={handleFacebookLogin} disabled={!!socialLoading}
+                  style={{ ...socialBtn, opacity: socialLoading === "facebook" ? 0.6 : 1 }}
+                  title="Continuar con Facebook">
+                  {socialLoading === "facebook"
+                    ? <span style={{ fontSize: 18 }}>⏳</span>
+                    : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="#1877f2">
+                        <path d="M22 12a10 10 0 1 0-11.5 9.87v-6.99H7.9V12h2.6V9.8c0-2.56 1.52-3.98 3.85-3.98 1.11 0 2.27.2 2.27.2v2.5h-1.28c-1.26 0-1.65.78-1.65 1.58V12h2.8l-.45 2.88h-2.35v6.99A10 10 0 0 0 22 12z" />
+                      </svg>
+                  }
                 </button>
               </div>
+              {socialError && (
+                <p style={{ fontSize: 12, color: "#ef4444", textAlign: "center", marginTop: 10, marginBottom: 0 }}>
+                  {socialError}
+                </p>
+              )}
 
               <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "1.25rem 0" }}>
                 <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
@@ -290,39 +327,6 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* ── MODAL NUEVO — nombre y apellido para login con email ── */}
-      {showNombreModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: "1.75rem", width: "90%", maxWidth: 320, border: "0.5px solid #e2e8f0" }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem", fontSize: 20 }}>👤</div>
-            <h3 style={{ textAlign: "center", fontSize: 16, fontWeight: 600, marginBottom: 4, color: "#0f172a" }}>¿Cómo te llamas?</h3>
-            <p style={{ textAlign: "center", fontSize: 13, color: "#64748b", marginBottom: "1.25rem" }}>Para registrar tu sesión en el historial</p>
-
-            <div style={{ marginBottom: "0.75rem" }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.5px" }}>Nombre</label>
-              <input type="text" value={nombreForm.nombre}
-                onChange={(e) => setNombreForm({ ...nombreForm, nombre: e.target.value })}
-                placeholder="Ej: Juan"
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "0.5px solid #e2e8f0", fontSize: 14, background: "#f8fafc", color: "#0f172a", outline: "none", boxSizing: "border-box" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "1.25rem" }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.5px" }}>Apellido</label>
-              <input type="text" value={nombreForm.apellido}
-                onChange={(e) => setNombreForm({ ...nombreForm, apellido: e.target.value })}
-                placeholder="Ej: Pérez"
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "0.5px solid #e2e8f0", fontSize: 14, background: "#f8fafc", color: "#0f172a", outline: "none", boxSizing: "border-box" }}
-              />
-            </div>
-
-            <button onClick={handleConfirmarNombre} disabled={pendingLogin}
-              style={{ width: "100%", padding: 10, borderRadius: 8, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", opacity: pendingLogin ? 0.7 : 1 }}>
-              {pendingLogin ? "Registrando..." : "Confirmar →"}
-            </button>
-          </div>
-        </div>
-      )}
 
     </div>
   );
