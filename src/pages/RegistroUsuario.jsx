@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import app from "../firebase";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider } from "firebase/auth";
-import { getDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { registrarSesion } from "../services/historialService";
 
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
-const githubProvider = new GithubAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -61,95 +59,82 @@ export default function Register() {
     return newErrors;
   };
 
-// ── Autenticación con Google ─────────────────────────────────
+  // Divide un displayName en { nombre, apellido }
+  const splitDisplayName = (displayName = "") => {
+    const partes = displayName.trim().split(" ").filter(Boolean);
+    if (partes.length === 0) return { nombre: "", apellido: "" };
+    if (partes.length === 1) return { nombre: partes[0], apellido: "" };
+    if (partes.length === 2) return { nombre: partes[0], apellido: partes[1] };
+    // Más de 2 palabras: últimas 2 como apellido, el resto como nombre
+    return { nombre: partes.slice(0, -2).join(" "), apellido: partes.slice(-2).join(" ") };
+  };
+
+  // Guarda en Firestore solo si el documento aún no existe
+  const guardarUsuarioSiNuevo = async (uid, datos) => {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+      await setDoc(userRef, { ...datos, createdAt: new Date() });
+    }
+  };
+
   const loginWithGithub = async () => {
-    const provider = new GithubAuthProvider();
-
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // 🔥 verificar si ya existe en Firestore
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          nombre: user.displayName || "",
-          email: user.email,
-          createdAt: new Date(),
-          provider: "github"
-        });
-      }
-
-      console.log("Login GitHub OK:", user);
-
-      // opcional: redirigir
-      navigate("/dashboard");
-
+      const result = await signInWithPopup(auth, new GithubAuthProvider());
+      const { uid, displayName, email, photoURL } = result.user;
+      const { nombre, apellido } = splitDisplayName(displayName);
+      await guardarUsuarioSiNuevo(uid, {
+        nombre, apellido, email: email || "", provider: "github", photoURL: photoURL || "",
+      });
+      await registrarSesion(nombre, apellido, "github", uid);
+      navigate("/perfil");
     } catch (error) {
       console.log(error);
     }
   };
-  
-  // ── Autenticación con Facebook ─────────────────────────────────
+
   const loginWithFacebook = async () => {
-    const provider = new FacebookAuthProvider();
-
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      const result = await signInWithPopup(auth, new FacebookAuthProvider());
+      const { uid, displayName, email } = result.user;
+      const { nombre, apellido } = splitDisplayName(displayName);
 
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          nombre: user.displayName || "",
-          email: user.email,
-          createdAt: new Date(),
-          provider: "facebook"
-        });
+      // Construir URL de foto confiable para Facebook con el access token.
+      // Se usa la URL base (sin query string) para evitar duplicar el token en logins sucesivos.
+      let photoURL = result.user.photoURL || "";
+      const fbCredential = FacebookAuthProvider.credentialFromResult(result);
+      if (fbCredential?.accessToken && photoURL) {
+        const baseURL = photoURL.split("?")[0];
+        photoURL = `${baseURL}?access_token=${fbCredential.accessToken}`;
+        await updateProfile(result.user, { photoURL });
       }
 
-      console.log("Login Facebook OK:", user);
-      navigate("/dashboard");
+      const userRef = doc(db, "users", uid);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        await setDoc(userRef, { nombre, apellido, email: email || "", provider: "facebook", photoURL, createdAt: new Date() });
+      } else if (photoURL) {
+        // Refrescar la URL en cada login porque el access token cambia
+        await setDoc(userRef, { photoURL }, { merge: true });
+      }
 
+      await registrarSesion(nombre, apellido, "facebook", uid);
+      navigate("/perfil");
     } catch (error) {
       console.log(error);
     }
   };
 
-  // ── Autenticación con Google ─────────────────────────────────
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      const displayName = user.displayName ? user.displayName.trim() : "";
-      const partes = displayName.split(" ").filter(Boolean);
-      let nombre = "";
-      let apellido = "";
-
-      if (partes.length === 1) {
-        nombre = partes[0];
-      } else if (partes.length === 2) {
-        nombre = partes[0];
-        apellido = partes[1];
-      } else {
-        // Para nombres con dos apellidos o dos nombres + un apellido
-        apellido = partes.slice(-2).join(" ");
-        nombre = partes.slice(0, -2).join(" ");
-      }
-
-      const db = getFirestore(app);
-      await setDoc(doc(db, "users", user.uid), {
-        nombre: nombre || "",
-        apellido: apellido || "",
-        email: user.email,
-        createdAt: new Date(),
+      const { uid, displayName, email, photoURL } = result.user;
+      const { nombre, apellido } = splitDisplayName(displayName);
+      await guardarUsuarioSiNuevo(uid, {
+        nombre, apellido, email: email || "", provider: "google", photoURL: photoURL || "",
       });
-
-      navigate("/dashboard");
+      await registrarSesion(nombre, apellido, "google", uid);
+      navigate("/perfil");
     } catch (error) {
       console.log(error);
       setErrors({ email: "Error al autenticar con Google" });
@@ -184,13 +169,17 @@ export default function Register() {
 
       const user = userCredential.user;
 
-      const db = getFirestore(app);
+      // Sincroniza displayName en Firebase Auth para que ProfilePage lo muestre
+      await updateProfile(user, {
+        displayName: `${form.nombre} ${form.apellido}`.trim(),
+      });
 
       await setDoc(doc(db, "users", user.uid), {
         nombre: form.nombre,
         apellido: form.apellido,
         email: form.email,
-        createdAt: new Date()
+        provider: "email",
+        createdAt: new Date(),
       });
 
       setShowModal(true);

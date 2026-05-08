@@ -8,178 +8,199 @@
 
 ---
 
-# 🔐 Sistema de Autenticación con React
+# 🔐 Sistema de Autenticación con React + Firebase
 
-Aplicación desarrollada con **React** que implementa un flujo completo de autenticación en el frontend:
+Aplicación desarrollada con **React** y **Firebase** que implementa un flujo completo de autenticación:
 
-* Inicio de sesión
-* Registro de usuario
-* Recuperación de contraseña
-* Restablecimiento de contraseña
+- Inicio de sesión con correo/contraseña
+- Registro de usuario
+- Autenticación social (Google, GitHub, Facebook)
+- Recuperación y restablecimiento de contraseña
+- Perfil de usuario con historial de sesiones
+- Cierre de sesión por inactividad
 
 ---
 
 ## 🚀 Tecnologías utilizadas
 
-* React
-* React Router DOM
-* JavaScript (ES6+)
-* Hooks:
+| Tecnología | Versión | Uso |
+|---|---|---|
+| React | 19 | Framework de UI |
+| React Router DOM | 7 | Navegación SPA |
+| Firebase Auth | 12 | Autenticación |
+| Firebase Firestore | 12 | Base de datos |
+| Vite | 7 | Bundler / Dev server |
 
-  * useState
-  * useNavigate
+### Hooks personalizados
+
+| Hook | Descripción |
+|---|---|
+| `useAuthUser` | Suscripción al estado de autenticación de Firebase |
+| `useInactivityLogout` | Cierre automático de sesión tras 5 minutos sin actividad |
 
 ---
 
 ## 📂 Estructura del proyecto
 
-```bash
+```
 src/
-│
 ├── pages/
-│   ├── LoginPage.jsx
-│   ├── RegistroUsuario.jsx
-│   ├── ForgotPage.jsx
-│   └── ResetPage.jsx
+│   ├── LandingPage.jsx          # Página de inicio / bienvenida
+│   ├── LoginPage.jsx            # Inicio de sesión (email + social)
+│   ├── RegistroUsuario.jsx      # Registro de cuenta
+│   ├── ForgotPage.jsx           # Solicitud de recuperación de contraseña
+│   ├── ResetPage.jsx            # Restablecimiento de contraseña (token)
+│   ├── ProfilePage.jsx          # Perfil + historial de sesiones
+│   └── HistorialAuth.jsx        # Vista pública del historial
 │
-├── App.jsx
-└── main.jsx
+├── components/
+│   └── ProtectedRoute.jsx       # HOC: redirige si no hay sesión activa
+│
+├── hooks/
+│   ├── useAuthUser.js           # Estado del usuario autenticado
+│   └── useInactivityLogout.js   # Temporizador de inactividad
+│
+├── services/
+│   └── historialService.js      # CRUD del historial en Firestore
+│
+├── firebase.js                  # Inicialización de Firebase
+├── App.jsx                      # Definición de rutas
+└── main.jsx                     # Punto de entrada
 ```
 
 ---
 
 ## 🧭 Rutas disponibles
 
-| Ruta               | Descripción                 |
-| ------------------ | --------------------------- |
-| `/login`           | Página de inicio de sesión  |
-| `/registrousuario` | Registro de nuevos usuarios |
-| `/forgot`          | Recuperación de contraseña  |
-| `/reset`           | Restablecer contraseña      |
+| Ruta | Componente | Protegida | Descripción |
+|---|---|---|---|
+| `/` | `LandingPage` | No | Página de bienvenida |
+| `/login` | `LoginPage` | No | Inicio de sesión |
+| `/registrousuario` | `RegistroUsuario` | No | Crear cuenta |
+| `/forgot` | `ForgotPage` | No | Recuperar contraseña |
+| `/reset` | `ResetPage` | No | Restablecer contraseña (vía token del email) |
+| `/perfil` | `ProfilePage` | Sí | Perfil + historial de sesiones |
+| `/historial` | `HistorialAuth` | Sí | Historial global |
 
 ---
 
-## 🔑 Funcionalidades
+## 🔑 Métodos de autenticación
 
-### 🟣 Login
-
-* Validación de email y contraseña
-* Mostrar/ocultar contraseña 👁️
-* Modal de confirmación
-* Navegación a registro y recuperación
-
----
-
-### 🔵 Registro de usuario
-
-* Formulario de creación de cuenta
-* Navegación desde login
+| Método | Archivo de referencia |
+|---|---|
+| Email / Contraseña | [`docs/auth-email.md`](docs/auth-email.md) |
+| Google | [`docs/auth-google.md`](docs/auth-google.md) |
+| GitHub | [`docs/auth-github.md`](docs/auth-github.md) |
+| Facebook | [`docs/auth-facebook.md`](docs/auth-facebook.md) |
 
 ---
 
-### 🟡 Recuperar contraseña (`ForgotPage`)
+## 🧠 Funcionalidades destacadas
 
-* Validación de correo
-* Modal de confirmación
-* Redirección a `/reset`
+### Autenticación
+- Login con email/contraseña y proveedores sociales (Google, GitHub, Facebook)
+- Registro con `createUserWithEmailAndPassword` + `updateProfile`
+- Recuperación de contraseña con `sendPasswordResetEmail` y verificación del proveedor vinculado
+- Restablecimiento con `verifyPasswordResetCode` + `confirmPasswordReset`
+- Cuentas sociales bloqueadas para cambio de contraseña (la contraseña la gestiona el proveedor)
 
-📌 Flujo:
+### Sesiones
+- Historial de sesiones guardado en Firestore (`historialAuth`)
+- `lastHeartbeat` actualizado cada 60 s mientras el usuario está activo
+- Sesiones sin heartbeat por más de 5 minutos se cierran automáticamente
+- Cierre por inactividad con cuenta regresiva visible
 
-1. Usuario ingresa email
-2. Se valida
-3. Se muestra modal
-4. Redirige
-
----
-
-### 🔴 Restablecer contraseña (`ResetPage`)
-
-* Validación de contraseña
-* Confirmación de contraseña
-* Modal de éxito
-* Redirección a login
-
-📌 Flujo:
-
-1. Nueva contraseña
-2. Confirmación
-3. Validación
-4. Guardado
-5. Redirección
+### Perfil
+- Foto de perfil desde el proveedor (Google, GitHub, Facebook)
+- Para Facebook: URL construida con access token para garantizar carga
+- Nombre y apellido almacenados en Firestore (`users/{uid}`)
 
 ---
 
-## 🧠 Conceptos aplicados
+## ⚙️ Configuración inicial
 
-* Formularios controlados
-* useState
-* Validaciones
-* Manejo de errores
-* Navegación SPA
-* UX con modales
-
----
-
-## 🎨 Diseño
-
-* Layout en 2 paneles
-* UI moderna tipo dashboard
-* Colores:
-
-  * Morado (#6366f1)
-  * Gris (#f1f5f9)
-
----
-
-## ⚠️ Buenas prácticas
-
-✅ SPA sin recarga
-✅ useNavigate
-✅ Validaciones
-✅ Feedback visual
-
----
-
-## ⚙️ Instrucciones de Ejecución
-
-### ✅ Requisitos
-
-* Node.js (16+)
-* npm
-* Git
-
-Verificar:
-
-```bash
-node -v
-npm -v
-git --version
-```
-
----
-
-## ▶️ Ejecutar proyecto
-
-1. Clonar repositorio:
+### 1. Clonar e instalar
 
 ```bash
 git clone https://github.com/IngKevin710/ProyectoReact.git
-```
-
-2. Entrar al proyecto:
-
-```bash
 cd ProyectoReact
-```
-
-3. Instalar dependencias:
-
-```bash
 npm install
 ```
 
-4. Ejecutar en local:
+### 2. Crear proyecto en Firebase
+
+1. Ir a [Firebase Console](https://console.firebase.google.com)
+2. Crear un nuevo proyecto
+3. Registrar una app web → copiar la configuración
+
+### 3. Configurar `src/firebase.js`
+
+```js
+import { initializeApp } from "firebase/app";
+
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+};
+
+const app = initializeApp(firebaseConfig);
+export default app;
+```
+
+### 4. Habilitar servicios en Firebase Console
+
+- **Authentication** → Sign-in method → habilitar los proveedores deseados
+- **Firestore Database** → crear base de datos en modo producción
+
+### 5. Ejecutar
 
 ```bash
 npm run dev
+```
+
+---
+
+## 📋 Colecciones de Firestore
+
+### `users`
+Documento por `uid` del usuario.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `nombre` | string | Nombre |
+| `apellido` | string | Apellido |
+| `email` | string | Correo |
+| `provider` | string | `email` / `google` / `github` / `facebook` |
+| `photoURL` | string | URL de foto de perfil |
+| `createdAt` | timestamp | Fecha de registro |
+
+### `historialAuth`
+Un documento por sesión iniciada.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `uid` | string | UID del usuario |
+| `nombre` | string | Nombre al momento del login |
+| `apellido` | string | Apellido al momento del login |
+| `metodo` | string | `email` / `google` / `github` / `facebook` |
+| `horaInicio` | timestamp | Hora de inicio de sesión |
+| `horaSalida` | timestamp \| null | Hora de cierre (null si activa) |
+| `estado` | string | `activo` / `finalizado` |
+| `lastHeartbeat` | timestamp | Último ping de actividad (cada 60 s) |
+
+---
+
+## ✅ Requisitos del entorno
+
+- Node.js 18+
+- npm 9+
+- Cuenta en [Firebase](https://firebase.google.com)
+
+```bash
+node -v   # >= 18
+npm -v    # >= 9
 ```

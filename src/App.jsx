@@ -27,7 +27,6 @@ import LoginPage from "./pages/LoginPage";
 import RegistroUsuario from "./pages/RegistroUsuario";
 import ForgotPage from "./pages/ForgotPage";
 import ResetPasswordPage from "./pages/ResetPage"; 
-import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HistorialAuth from "./pages/HistorialAuth"
 import ProfilePage from "./pages/ProfilePage"
@@ -62,7 +61,6 @@ function App() {
         <Route path="/registrousuario" element={<RegistroUsuario />} />
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/reset" element={<ResetPasswordPage />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/historial" element={<HistorialAuth />} />
         <Route path="/perfil" element={<ProfilePage />} />
       </Routes>
