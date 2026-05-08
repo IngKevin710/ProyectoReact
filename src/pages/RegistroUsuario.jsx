@@ -1,5 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import app from "../firebase";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { registrarSesion } from "../services/historialService";
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -51,6 +59,88 @@ export default function Register() {
     return newErrors;
   };
 
+  // Divide un displayName en { nombre, apellido }
+  const splitDisplayName = (displayName = "") => {
+    const partes = displayName.trim().split(" ").filter(Boolean);
+    if (partes.length === 0) return { nombre: "", apellido: "" };
+    if (partes.length === 1) return { nombre: partes[0], apellido: "" };
+    if (partes.length === 2) return { nombre: partes[0], apellido: partes[1] };
+    // Más de 2 palabras: últimas 2 como apellido, el resto como nombre
+    return { nombre: partes.slice(0, -2).join(" "), apellido: partes.slice(-2).join(" ") };
+  };
+
+  // Guarda en Firestore solo si el documento aún no existe
+  const guardarUsuarioSiNuevo = async (uid, datos) => {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+      await setDoc(userRef, { ...datos, createdAt: new Date() });
+    }
+  };
+
+  const loginWithGithub = async () => {
+    try {
+      const result = await signInWithPopup(auth, new GithubAuthProvider());
+      const { uid, displayName, email, photoURL } = result.user;
+      const { nombre, apellido } = splitDisplayName(displayName);
+      await guardarUsuarioSiNuevo(uid, {
+        nombre, apellido, email: email || "", provider: "github", photoURL: photoURL || "",
+      });
+      await registrarSesion(nombre, apellido, "github", uid);
+      navigate("/perfil");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const loginWithFacebook = async () => {
+    try {
+      const result = await signInWithPopup(auth, new FacebookAuthProvider());
+      const { uid, displayName, email } = result.user;
+      const { nombre, apellido } = splitDisplayName(displayName);
+
+      // Construir URL de foto confiable para Facebook con el access token.
+      // Se usa la URL base (sin query string) para evitar duplicar el token en logins sucesivos.
+      let photoURL = result.user.photoURL || "";
+      const fbCredential = FacebookAuthProvider.credentialFromResult(result);
+      if (fbCredential?.accessToken && photoURL) {
+        const baseURL = photoURL.split("?")[0];
+        photoURL = `${baseURL}?access_token=${fbCredential.accessToken}`;
+        await updateProfile(result.user, { photoURL });
+      }
+
+      const userRef = doc(db, "users", uid);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        await setDoc(userRef, { nombre, apellido, email: email || "", provider: "facebook", photoURL, createdAt: new Date() });
+      } else if (photoURL) {
+        // Refrescar la URL en cada login porque el access token cambia
+        await setDoc(userRef, { photoURL }, { merge: true });
+      }
+
+      await registrarSesion(nombre, apellido, "facebook", uid);
+      navigate("/perfil");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const { uid, displayName, email, photoURL } = result.user;
+      const { nombre, apellido } = splitDisplayName(displayName);
+      await guardarUsuarioSiNuevo(uid, {
+        nombre, apellido, email: email || "", provider: "google", photoURL: photoURL || "",
+      });
+      await registrarSesion(nombre, apellido, "google", uid);
+      navigate("/perfil");
+    } catch (error) {
+      console.log(error);
+      setErrors({ email: "Error al autenticar con Google" });
+    }
+  };
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
@@ -60,15 +150,55 @@ export default function Register() {
     setTouched({ ...touched, [e.target.name]: true });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setTouched({ nombre: true, apellido: true, email: true, password: true, confirmar: true });
       return;
     }
-    setShowModal(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password
+      );
+
+      const user = userCredential.user;
+
+      // Sincroniza displayName en Firebase Auth para que ProfilePage lo muestre
+      await updateProfile(user, {
+        displayName: `${form.nombre} ${form.apellido}`.trim(),
+      });
+
+      await setDoc(doc(db, "users", user.uid), {
+        nombre: form.nombre,
+        apellido: form.apellido,
+        email: form.email,
+        provider: "email",
+        createdAt: new Date(),
+      });
+
+      setShowModal(true);
+
+    } catch (error) {
+      console.log(error);
+
+      let errorMsg = "Error al registrar";
+
+      if (error.code === "auth/email-already-in-use") {
+        errorMsg = "El correo ya está registrado";
+      } else if (error.code === "auth/invalid-email") {
+        errorMsg = "Correo inválido";
+      } else if (error.code === "auth/weak-password") {
+        errorMsg = "La contraseña es muy débil";
+      }
+
+      setErrors({ email: errorMsg });
+    }
   };
 
   // ── Helpers de estilo ────────────────────────────────────────
@@ -379,6 +509,108 @@ export default function Register() {
                 Registrarse →
               </button>
 
+
+              {/* Login con proveedores */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 16,
+                  marginTop: 16,
+                }}
+              >
+                {/* Google */}
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    border: "1px solid #e2e8f0",
+                    background: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.06)",
+                    transition: "transform 0.15s ease",
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+                  onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  </svg>
+                </button>
+
+                {/* GitHub */}
+                <button
+                  type="button"
+                  onClick={loginWithGithub}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    border: "1px solid #e2e8f0",
+                    background: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.06)",
+                    transition: "transform 0.15s ease",
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+                  onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  <svg width="28" height="28" viewBox="0 0 16 16" fill="#000">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 
+      7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49
+      -2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+      -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82
+      .72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07
+      -1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15
+      -.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82
+      .64-.18 1.32-.27 2-.27s1.36.09 2 .27
+      c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+      .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95
+      .29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2
+      0 .21.15.46.55.38A8.013 8.013 0 0016 8
+      c0-4.42-3.58-8-8-8z"/>
+                  </svg>
+                </button>
+
+                {/* Facebook */}
+                <button
+                  type="button"
+                  onClick={loginWithFacebook} 
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    border: "1px solid #e2e8f0",
+                    background: "#1877f2",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.06)",
+                    transition: "transform 0.15s ease",
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+                  onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff">
+                    <path d="M22 12a10 10 0 1 0-11.5 9.87v-6.99H7.9V12h2.6V9.8c0-2.56 1.52-3.98 3.85-3.98 1.11 0 2.27.2 2.27.2v2.5h-1.28c-1.26 0-1.65.78-1.65 1.58V12h2.8l-.45 2.88h-2.35v6.99A10 10 0 0 0 22 12z" />
+                  </svg>
+                </button>
+              </div>
+
               {/* Separador */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "1.25rem 0" }}>
                 <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
@@ -388,7 +620,7 @@ export default function Register() {
 
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/login")}
                 style={{
                     width: "100%",
                     padding: "11px",
