@@ -22,6 +22,7 @@ import HookUseMemo from "./playground/hooks/HookUseMemo";
 import HookUseCallback from "./playground/hooks/HookUseCallback";
 import HookUseTransition from "./playground/hooks/HookUseTransition";
 import HookUseDeferredValue from "./playground/hooks/HookUseDeferredValue";
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegistroUsuario from "./pages/RegistroUsuario";
 import ForgotPage from "./pages/ForgotPage";
@@ -29,6 +30,7 @@ import ResetPasswordPage from "./pages/ResetPage";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HistorialAuth from "./pages/HistorialAuth"
+import ProfilePage from "./pages/ProfilePage"
 
 function App() {
   return (
@@ -55,12 +57,14 @@ function App() {
         <Route path="/hoikusecallback" element={<HookUseCallback />} />
         <Route path="/hookusetransition" element={<HookUseTransition />} />
         <Route path="/hoikusedeferredvalue" element={<HookUseDeferredValue />} />
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/registrousuario" element={<RegistroUsuario />} />
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/reset" element={<ResetPasswordPage />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/historial" element={<HistorialAuth />} />
+        <Route path="/perfil" element={<ProfilePage />} />
       </Routes>
     </BrowserRouter>
   );

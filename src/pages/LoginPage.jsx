@@ -80,7 +80,7 @@ export default function LoginPage() {
     await registrarSesion(nombre, apellido, "email");
     setPendingLogin(false);
     setShowNombreModal(false);
-    navigate("/historial");
+    navigate("/perfil");
   };
 
   // 🔵 MODIFICADO — Google
@@ -92,7 +92,7 @@ export default function LoginPage() {
       const nombre   = parts[0]                  || "Sin nombre";
       const apellido = parts.slice(1).join(" ") || "Sin apellido";
       await registrarSesion(nombre, apellido, "google");
-      navigate("/historial");
+      navigate("/perfil");
     } catch (error) {
       console.log(error);
     }
@@ -107,7 +107,7 @@ export default function LoginPage() {
       const nombre   = parts[0]                  || "Sin nombre";
       const apellido = parts.slice(1).join(" ") || "Sin apellido";
       await registrarSesion(nombre, apellido, "github");
-      navigate("/historial");
+      navigate("/perfil");
     } catch (error) {
       console.log(error);
     }
@@ -122,7 +122,7 @@ export default function LoginPage() {
       const nombre   = parts[0]                  || "Sin nombre";
       const apellido = parts.slice(1).join(" ") || "Sin apellido";
       await registrarSesion(nombre, apellido, "facebook");
-      navigate("/historial");
+      navigate("/perfil");
     } catch (error) {
       console.log(error);
     }
