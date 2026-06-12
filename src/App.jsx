@@ -31,6 +31,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import HistorialAuth from "./pages/HistorialAuth"
 import ProfilePage from "./pages/ProfilePage"
 import GestionUsuarios from "./pages/GestionUsuarios"
+import DashboardPage from "./pages/DashboardPage"
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/reset" element={<ResetPasswordPage />} />
         <Route path="/historial" element={<HistorialAuth />} />
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/usuarios" element={<GestionUsuarios />} />
       </Routes>
