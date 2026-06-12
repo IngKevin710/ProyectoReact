@@ -32,6 +32,7 @@ import HistorialAuth from "./pages/HistorialAuth"
 import ProfilePage from "./pages/ProfilePage"
 import GestionUsuarios from "./pages/GestionUsuarios"
 import DashboardPage from "./pages/DashboardPage"
+import GestionProductos from "./pages/GestionProductos"
 
 function App() {
   return (
@@ -67,6 +68,7 @@ function App() {
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/usuarios" element={<GestionUsuarios />} />
+        <Route path="/productos" element={<ProtectedRoute><GestionProductos /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

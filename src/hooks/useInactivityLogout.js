@@ -5,6 +5,7 @@ const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
 export function useInactivityLogout(onLogout) {
   const [remaining, setRemaining] = useState(TIMEOUT_MS);
   const onLogoutRef     = useRef(onLogout);
+  // eslint-disable-next-line react-hooks/purity
   const lastActivityRef = useRef(Date.now());
   const timeoutRef      = useRef(null);
 
