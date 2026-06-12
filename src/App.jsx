@@ -30,6 +30,7 @@ import ResetPasswordPage from "./pages/ResetPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HistorialAuth from "./pages/HistorialAuth"
 import ProfilePage from "./pages/ProfilePage"
+import GestionUsuarios from "./pages/GestionUsuarios"
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
         <Route path="/reset" element={<ResetPasswordPage />} />
         <Route path="/historial" element={<HistorialAuth />} />
         <Route path="/perfil" element={<ProfilePage />} />
+        <Route path="/usuarios" element={<GestionUsuarios />} />
       </Routes>
     </BrowserRouter>
   );
