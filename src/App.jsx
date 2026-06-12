@@ -65,10 +65,10 @@ function App() {
         <Route path="/registrousuario" element={<RegistroUsuario />} />
         <Route path="/forgot" element={<ForgotPage />} />
         <Route path="/reset" element={<ResetPasswordPage />} />
-        <Route path="/historial" element={<HistorialAuth />} />
+        <Route path="/historial" element={<ProtectedRoute><HistorialAuth /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/perfil" element={<ProfilePage />} />
-        <Route path="/usuarios" element={<GestionUsuarios />} />
+        <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/usuarios" element={<ProtectedRoute><GestionUsuarios /></ProtectedRoute>} />
         <Route path="/productos" element={<ProtectedRoute><GestionProductos /></ProtectedRoute>} />
         <Route path="/proveedores" element={<ProtectedRoute><GestionProveedores /></ProtectedRoute>} />
       </Routes>
