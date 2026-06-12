@@ -33,6 +33,7 @@ import ProfilePage from "./pages/ProfilePage"
 import GestionUsuarios from "./pages/GestionUsuarios"
 import DashboardPage from "./pages/DashboardPage"
 import GestionProductos from "./pages/GestionProductos"
+import GestionProveedores from "./pages/GestionProveedores"
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/usuarios" element={<GestionUsuarios />} />
         <Route path="/productos" element={<ProtectedRoute><GestionProductos /></ProtectedRoute>} />
+        <Route path="/proveedores" element={<ProtectedRoute><GestionProveedores /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

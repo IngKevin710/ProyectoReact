@@ -1,17 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { getAuth, signOut } from "firebase/auth";
 import { useAuthUser } from "../hooks/useAuthUser";
-import { cerrarSesion } from "../services/historialService";
+import Sidebar from "../components/Sidebar";
 import {
   crearUsuario,
   obtenerUsuarios,
   actualizarUsuario,
   eliminarUsuario,
 } from "../services/usuariosService";
-import app from "../firebase";
 
-const auth = getAuth(app);
 const ROLES = ["Administrador", "Editor", "Visualizador"];
 const FORM_VACIO = { nombre: "", apellido: "", email: "", telefono: "", rol: "Visualizador" };
 
@@ -27,11 +23,7 @@ const CSS = `
   @keyframes slideIn{ from { opacity:0; transform:scale(.96); } to { opacity:1; transform:scale(1); } }
 
   .gu-layout  { display:flex; height:100dvh; font-family:'Segoe UI',sans-serif; background:#f1f5f9; overflow:hidden; }
-  .gu-sidebar { width:240px; min-width:240px; display:flex; flex-direction:column;
-                background:#1a1035; padding:28px 12px 20px; box-sizing:border-box;
-                box-shadow:4px 0 24px rgba(0,0,0,.15); position:relative; overflow:hidden; flex-shrink:0; }
   .gu-main    { flex:1; overflow-y:auto; padding:28px 32px; min-width:0; }
-  .gu-topbar  { display:none; }
 
   .gu-stats      { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
   .gu-table-wrap { display:block; }
@@ -40,10 +32,6 @@ const CSS = `
 
   @media (max-width:768px) {
     .gu-layout  { flex-direction:column; }
-    .gu-sidebar { display:none; }
-    .gu-topbar  { display:flex; align-items:center; justify-content:space-between;
-                  padding:14px 18px; background:#1a1035; flex-shrink:0;
-                  box-shadow:0 2px 12px rgba(0,0,0,.2); z-index:10; }
     .gu-main    { padding:14px; height:0; flex:1; overflow-y:auto; }
     .gu-stats   { grid-template-columns:1fr 1fr; }
     .gu-table-wrap { display:none; }
@@ -56,12 +44,6 @@ const CSS = `
     .gu-form-grid { grid-template-columns:1fr; }
   }
 
-  .nav-btn { display:flex; align-items:center; gap:10px; width:100%; padding:10px 14px;
-             border-radius:10px; background:transparent; border:none; color:rgba(255,255,255,.55);
-             font-size:13px; font-weight:500; cursor:pointer; text-align:left; }
-  .nav-btn:hover { background:rgba(255,255,255,.07); }
-  .nav-btn.active { background:rgba(99,102,241,.22); border-left:3px solid #6366f1; color:#a5b4fc; font-weight:600; }
-
   .row-tr:hover { background:#f8fafc; }
 
   .action-btn { padding:5px 13px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
@@ -70,19 +52,6 @@ const CSS = `
   .del-btn    { border:1.5px solid #fecaca; background:#fff5f5; color:#ef4444; }
   .del-btn:hover  { background:#fee2e2; }
 `;
-
-function Avatar({ name, photo, size = 40 }) {
-  const [err, setErr] = useState(false);
-  const initial = (name || "?").charAt(0).toUpperCase();
-  const base = { width: size, height: size, borderRadius: "50%", flexShrink: 0, border: "2px solid rgba(255,255,255,.2)" };
-  if (photo && !err)
-    return <img src={photo} alt="av" onError={() => setErr(true)} style={{ ...base, objectFit: "cover" }} />;
-  return (
-    <div style={{ ...base, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * .38, fontWeight: 700, color: "#fff" }}>
-      {initial}
-    </div>
-  );
-}
 
 function Spinner() {
   return <div style={{ width: 32, height: 32, border: "3px solid #e2e8f0", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin .8s linear infinite", margin: "0 auto" }} />;
@@ -134,8 +103,7 @@ function FormField({ label, required, error, children }) {
 }
 
 export default function GestionUsuarios() {
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuthUser();
+  const { loading: authLoading } = useAuthUser();
 
   const [usuarios, setUsuarios]         = useState([]);
   const [cargando, setCargando]         = useState(true);
@@ -148,7 +116,6 @@ export default function GestionUsuarios() {
   const [confirmElim, setConfirmElim]   = useState(null);
   const [eliminando, setEliminando]     = useState(false);
   const [toast, setToast]               = useState(null);
-  const [menuAbierto, setMenuAbierto]   = useState(false);
 
   const mostrarToast = (msg, tipo = "ok") => {
     setToast({ msg, tipo });
@@ -163,12 +130,6 @@ export default function GestionUsuarios() {
 
   useEffect(() => { cargarUsuarios(); }, [cargarUsuarios]);
 
-  const handleLogout = async () => {
-    await cerrarSesion();
-    await signOut(auth);
-    navigate("/");
-  };
-
   const validar = () => {
     const e = {};
     if (!form.nombre.trim())   e.nombre   = "Requerido";
@@ -179,7 +140,7 @@ export default function GestionUsuarios() {
     return !Object.keys(e).length;
   };
 
-  const abrirCrear = () => { setForm(FORM_VACIO); setEditandoId(null); setErrForm({}); setMostrarForm(true); setMenuAbierto(false); };
+  const abrirCrear = () => { setForm(FORM_VACIO); setEditandoId(null); setErrForm({}); setMostrarForm(true); };
   const abrirEditar = (u) => {
     setForm({ nombre: u.nombre || "", apellido: u.apellido || "", email: u.email || "", telefono: u.telefono || "", rol: u.rol || "Visualizador" });
     setEditandoId(u.id); setErrForm({}); setMostrarForm(true);
@@ -218,7 +179,6 @@ export default function GestionUsuarios() {
       </div>
     );
 
-  const displayName = user?.displayName || "Usuario";
   const filtrados = usuarios.filter((u) => {
     const q = busqueda.toLowerCase().trim();
     return !q || `${u.nombre} ${u.apellido} ${u.email} ${u.rol}`.toLowerCase().includes(q);
@@ -310,58 +270,7 @@ export default function GestionUsuarios() {
         </ModalOverlay>
       )}
 
-      {/* ── MENÚ MÓVIL ── */}
-      {menuAbierto && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setMenuAbierto(false)}>
-          <div style={{ position: "absolute", top: 56, left: 0, right: 0, background: "#1a1035", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, boxShadow: "0 8px 24px rgba(0,0,0,.3)" }} onClick={(e) => e.stopPropagation()}>
-            <button className="nav-btn" onClick={() => { navigate("/dashboard"); setMenuAbierto(false); }}><span>🏠</span> Dashboard</button>
-            <button className="nav-btn" onClick={() => { navigate("/perfil"); setMenuAbierto(false); }}><span>🔐</span> Historial de sesiones</button>
-            <button className="nav-btn active"><span>👥</span> Gestión de usuarios</button>
-            <button className="nav-btn" onClick={() => { navigate("/productos"); setMenuAbierto(false); }}><span>📦</span> Gestión de productos</button>
-            <button onClick={handleLogout} style={{ marginTop: 8, padding: "10px 14px", borderRadius: 10, border: "none", background: "rgba(239,68,68,.18)", color: "#f87171", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cerrar sesión</button>
-          </div>
-        </div>
-      )}
-
-      {/* ── TOP BAR MÓVIL ── */}
-      <div className="gu-topbar">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Avatar name={displayName} photo={user?.photoURL} size={34} />
-          <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>👥 Usuarios</span>
-        </div>
-        <button onClick={() => setMenuAbierto(!menuAbierto)} style={{ background: "rgba(255,255,255,.1)", border: "none", borderRadius: 8, width: 36, height: 36, cursor: "pointer", fontSize: 18, color: "#fff" }}>☰</button>
-      </div>
-
-      {/* ══ SIDEBAR ══ */}
-      <aside className="gu-sidebar">
-        <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", top: -50, right: -50, background: "rgba(99,102,241,.1)", pointerEvents: "none" }} />
-
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20, zIndex: 1 }}>
-          <div style={{ position: "relative", marginBottom: 10 }}>
-            <Avatar name={displayName} photo={user?.photoURL} size={72} />
-            <span style={{ position: "absolute", bottom: 2, right: 2, width: 13, height: 13, background: "#22c55e", borderRadius: "50%", border: "2px solid #1a1035" }} />
-          </div>
-          <h3 style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 700, color: "#fff", textAlign: "center", wordBreak: "break-word" }}>{displayName}</h3>
-          <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,.4)", textAlign: "center", wordBreak: "break-all", lineHeight: 1.4 }}>{user?.email}</p>
-        </div>
-
-        <div style={{ height: 1, background: "rgba(255,255,255,.08)", marginBottom: 12, zIndex: 1 }} />
-
-        <nav style={{ display: "flex", flexDirection: "column", gap: 4, zIndex: 1 }}>
-          <button className="nav-btn" onClick={() => navigate("/dashboard")}><span style={{ fontSize: 16 }}>🏠</span> Dashboard</button>
-          <button className="nav-btn" onClick={() => navigate("/perfil")}><span style={{ fontSize: 16 }}>🔐</span> Historial de sesiones</button>
-          <button className="nav-btn active"><span style={{ fontSize: 16 }}>👥</span> Gestión de usuarios</button>
-          <button className="nav-btn" onClick={() => navigate("/productos")}><span style={{ fontSize: 16 }}>📦</span> Gestión de productos</button>
-        </nav>
-
-        <div style={{ flex: 1 }} />
-
-        <button onClick={handleLogout} style={{ width: "100%", padding: 11, borderRadius: 10, border: "none", background: "rgba(239,68,68,.18)", color: "#f87171", fontSize: 13, fontWeight: 600, cursor: "pointer", zIndex: 1 }}
-          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(239,68,68,.32)"}
-          onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239,68,68,.18)"}>
-          Cerrar sesión
-        </button>
-      </aside>
+      <Sidebar />
 
       {/* ══ CONTENIDO ══ */}
       <main className="gu-main">

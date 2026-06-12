@@ -2,62 +2,53 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuthUser } from "../hooks/useAuthUser";
 import Sidebar from "../components/Sidebar";
 import {
-  crearProducto,
-  obtenerProductos,
-  actualizarProducto,
-  eliminarProducto,
-} from "../services/productosService";
+  crearProveedor,
+  obtenerProveedores,
+  actualizarProveedor,
+  eliminarProveedor,
+} from "../services/proveedoresService";
 
-const CATEGORIAS = ["Electrónica", "Ropa", "Alimentos", "Hogar", "Deportes", "Otros"];
 const ESTADOS    = ["Activo", "Inactivo"];
-const FORM_VACIO = { nombre: "", descripcion: "", precio: "", stock: "", categoria: "Electrónica", estado: "Activo" };
+const FORM_VACIO = { nombre: "", nit: "", contacto: "", email: "", telefono: "", direccion: "", estado: "Activo" };
 
-const CATEGORIA_STYLE = {
-  "Electrónica": { bg: "#dbeafe", color: "#1d4ed8", icon: "💻" },
-  "Ropa":        { bg: "#fce7f3", color: "#be185d", icon: "👕" },
-  "Alimentos":   { bg: "#dcfce7", color: "#15803d", icon: "🍎" },
-  "Hogar":       { bg: "#fef3c7", color: "#b45309", icon: "🏠" },
-  "Deportes":    { bg: "#e0e7ff", color: "#4338ca", icon: "⚽" },
-  "Otros":       { bg: "#f1f5f9", color: "#475569", icon: "📦" },
-};
-
-const formatPrecio = (v) =>
-  `$${Number(v || 0).toLocaleString("es-CO")}`;
+const REGEX_EMAIL    = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const REGEX_NIT      = /^\d{5,15}(-\d)?$/;
+const REGEX_TELEFONO = /^\+?\d{7,15}$/;
 
 const CSS = `
   @keyframes spin    { to { transform: rotate(360deg); } }
   @keyframes fadeUp  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   @keyframes slideIn { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:scale(1); } }
 
-  .gp-layout  { display:flex; height:100dvh; font-family:'Segoe UI',sans-serif; background:#f1f5f9; overflow:hidden; }
-  .gp-main    { flex:1; overflow-y:auto; padding:28px 32px; min-width:0; }
+  .gv-layout  { display:flex; height:100dvh; font-family:'Segoe UI',sans-serif; background:#f1f5f9; overflow:hidden; }
+  .gv-main    { flex:1; overflow-y:auto; padding:28px 32px; min-width:0; }
 
-  .gp-stats      { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
-  .gp-table-wrap { display:block; }
-  .gp-cards-wrap { display:none; }
-  .gp-form-grid  { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .gv-stats      { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+  .gv-table-wrap { display:block; }
+  .gv-cards-wrap { display:none; }
+  .gv-form-grid  { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 
   @media (max-width:768px) {
-    .gp-layout  { flex-direction:column; }
-    .gp-main    { padding:14px; height:0; flex:1; overflow-y:auto; }
-    .gp-stats   { grid-template-columns:1fr 1fr; }
-    .gp-table-wrap { display:none; }
-    .gp-cards-wrap { display:flex; flex-direction:column; gap:12px; }
-    .gp-header-row { flex-direction:column !important; align-items:stretch !important; }
-    .gp-search-bar { flex-wrap:wrap; }
+    .gv-layout  { flex-direction:column; }
+    .gv-main    { padding:14px; height:0; flex:1; overflow-y:auto; }
+    .gv-stats   { grid-template-columns:1fr 1fr; }
+    .gv-table-wrap { display:none; }
+    .gv-cards-wrap { display:flex; flex-direction:column; gap:12px; }
+    .gv-header-row { flex-direction:column !important; align-items:stretch !important; }
+    .gv-search-bar { flex-wrap:wrap; }
   }
   @media (max-width:480px) {
-    .gp-stats     { grid-template-columns:1fr; }
-    .gp-form-grid { grid-template-columns:1fr; }
+    .gv-stats     { grid-template-columns:1fr; }
+    .gv-form-grid { grid-template-columns:1fr; }
   }
 
-  .gp-row:hover { background:#f8fafc; }
+  .gv-row:hover { background:#f8fafc; }
 
-  .gp-action-btn { padding:5px 13px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
-  .gp-edit-btn   { border:1.5px solid #e2e8f0; background:#fff; color:#6366f1; }
-  .gp-edit-btn:hover { background:#ede9fe; border-color:#6366f1; }
-  .gp-del-btn    { border:1.5px solid #fecaca; background:#fff5f5; color:#ef4444; }
-  .gp-del-btn:hover  { background:#fee2e2; }
+  .gv-action-btn { padding:5px 13px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .gv-edit-btn   { border:1.5px solid #e2e8f0; background:#fff; color:#6366f1; }
+  .gv-edit-btn:hover { background:#ede9fe; border-color:#6366f1; }
+  .gv-del-btn    { border:1.5px solid #fecaca; background:#fff5f5; color:#ef4444; }
+  .gv-del-btn:hover  { background:#fee2e2; }
 `;
 
 function Spinner() {
@@ -90,6 +81,15 @@ function FormField({ label, required, error, children }) {
   );
 }
 
+function EstadoBadge({ estado }) {
+  const activo = estado !== "Inactivo";
+  return (
+    <span style={{ background: activo ? "#dcfce7" : "#f1f5f9", color: activo ? "#16a34a" : "#64748b", padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
+      {activo ? "🟢 Activo" : "⚫ Inactivo"}
+    </span>
+  );
+}
+
 function ModalOverlay({ children }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(3px)", padding: 16 }}>
@@ -100,65 +100,52 @@ function ModalOverlay({ children }) {
   );
 }
 
-function CategoriaBadge({ categoria }) {
-  const s = CATEGORIA_STYLE[categoria] ?? CATEGORIA_STYLE["Otros"];
-  return (
-    <span style={{ background: s.bg, color: s.color, padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
-      {s.icon} {categoria}
-    </span>
-  );
-}
-
-function EstadoBadge({ estado }) {
-  const activo = estado === "Activo";
-  return (
-    <span style={{ background: activo ? "#dcfce7" : "#f1f5f9", color: activo ? "#16a34a" : "#64748b", padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
-      {activo ? "🟢 Activo" : "⚫ Inactivo"}
-    </span>
-  );
-}
-
-export default function GestionProductos() {
+export default function GestionProveedores() {
   const { loading: authLoading } = useAuthUser();
 
-  const [productos, setProductos]   = useState([]);
-  const [cargando, setCargando]     = useState(true);
-  const [busqueda, setBusqueda]     = useState("");
-  const [filtroCat, setFiltroCat]   = useState("");
-  const [form, setForm]             = useState(FORM_VACIO);
-  const [editandoId, setEditandoId] = useState(null);
+  const [proveedores, setProveedores] = useState([]);
+  const [cargando, setCargando]       = useState(true);
+  const [busqueda, setBusqueda]       = useState("");
+  const [form, setForm]               = useState(FORM_VACIO);
+  const [editandoId, setEditandoId]   = useState(null);
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [guardando, setGuardando]   = useState(false);
-  const [errForm, setErrForm]       = useState({});
+  const [guardando, setGuardando]     = useState(false);
+  const [errForm, setErrForm]         = useState({});
   const [confirmElim, setConfirmElim] = useState(null);
-  const [eliminando, setEliminando] = useState(false);
-  const [toast, setToast]           = useState(null);
+  const [eliminando, setEliminando]   = useState(false);
+  const [toast, setToast]             = useState(null);
 
   const mostrarToast = (msg, tipo = "ok") => {
     setToast({ msg, tipo });
     setTimeout(() => setToast(null), 3200);
   };
 
-  const cargarProductos = useCallback(async () => {
+  const cargarProveedores = useCallback(async () => {
     setCargando(true);
     try {
-      const data = await obtenerProductos();
-      setProductos(data);
+      const data = await obtenerProveedores();
+      setProveedores(data);
     } finally {
       setCargando(false);
     }
   }, []);
 
-  useEffect(() => { cargarProductos(); }, [cargarProductos]);
+  useEffect(() => { cargarProveedores(); }, [cargarProveedores]);
 
   const validar = () => {
     const e = {};
     if (!form.nombre.trim()) e.nombre = "El nombre es obligatorio.";
     else if (form.nombre.trim().length < 2) e.nombre = "Mínimo 2 caracteres.";
-    if (form.precio === "" || form.precio === null) e.precio = "El precio es obligatorio.";
-    else if (isNaN(form.precio) || Number(form.precio) < 0) e.precio = "Precio inválido (número ≥ 0).";
-    if (form.stock === "" || form.stock === null) e.stock = "El stock es obligatorio.";
-    else if (isNaN(form.stock) || Number(form.stock) < 0 || !Number.isInteger(Number(form.stock))) e.stock = "Stock inválido (entero ≥ 0).";
+    if (!form.nit.trim()) e.nit = "El NIT es obligatorio.";
+    else if (!REGEX_NIT.test(form.nit.trim())) e.nit = "NIT inválido (ej: 900123456-7).";
+    if (!form.contacto.trim()) e.contacto = "La persona de contacto es obligatoria.";
+    else if (form.contacto.trim().length < 2) e.contacto = "Mínimo 2 caracteres.";
+    if (!form.email.trim()) e.email = "El email es obligatorio.";
+    else if (!REGEX_EMAIL.test(form.email.trim())) e.email = "Email inválido (ej: contacto@empresa.com).";
+    if (!form.telefono.trim()) e.telefono = "El teléfono es obligatorio.";
+    else if (!REGEX_TELEFONO.test(form.telefono.trim().replace(/[\s-]/g, ""))) e.telefono = "Teléfono inválido (7 a 15 dígitos).";
+    if (!form.direccion.trim()) e.direccion = "La dirección es obligatoria.";
+    else if (form.direccion.trim().length < 5) e.direccion = "Mínimo 5 caracteres.";
     return e;
   };
 
@@ -178,10 +165,11 @@ export default function GestionProductos() {
   const abrirEditar = (p) => {
     setForm({
       nombre: p.nombre || "",
-      descripcion: p.descripcion || "",
-      precio: p.precio ?? "",
-      stock: p.stock ?? "",
-      categoria: p.categoria || "Electrónica",
+      nit: p.nit || "",
+      contacto: p.contacto || "",
+      email: p.email || "",
+      telefono: p.telefono || "",
+      direccion: p.direccion || "",
       estado: p.estado || "Activo",
     });
     setEditandoId(p.id);
@@ -203,21 +191,22 @@ export default function GestionProductos() {
     try {
       const datos = {
         nombre: form.nombre.trim(),
-        descripcion: form.descripcion.trim(),
-        precio: Number(form.precio),
-        stock: Number(form.stock),
-        categoria: form.categoria,
+        nit: form.nit.trim(),
+        contacto: form.contacto.trim(),
+        email: form.email.trim().toLowerCase(),
+        telefono: form.telefono.trim(),
+        direccion: form.direccion.trim(),
         estado: form.estado,
       };
       if (editandoId) {
-        await actualizarProducto(editandoId, datos);
-        mostrarToast("Producto actualizado");
+        await actualizarProveedor(editandoId, datos);
+        mostrarToast("Proveedor actualizado");
       } else {
-        await crearProducto(datos);
-        mostrarToast("Producto creado");
+        await crearProveedor(datos);
+        mostrarToast("Proveedor creado");
       }
       cerrarForm();
-      await cargarProductos();
+      await cargarProveedores();
     } catch {
       mostrarToast("Error al guardar, intenta de nuevo.", "err");
     } finally {
@@ -229,10 +218,10 @@ export default function GestionProductos() {
     if (!confirmElim) return;
     setEliminando(true);
     try {
-      await eliminarProducto(confirmElim.id);
-      mostrarToast("Producto eliminado");
+      await eliminarProveedor(confirmElim.id);
+      mostrarToast("Proveedor eliminado");
       setConfirmElim(null);
-      await cargarProductos();
+      await cargarProveedores();
     } catch {
       mostrarToast("Error al eliminar, intenta de nuevo.", "err");
     } finally {
@@ -247,18 +236,18 @@ export default function GestionProductos() {
     </div>
   );
 
-  const stockTotal  = productos.reduce((acc, p) => acc + Number(p.stock || 0), 0);
-  const activos     = productos.filter((p) => p.estado === "Activo").length;
+  const activos   = proveedores.filter((p) => p.estado !== "Inactivo").length;
+  const inactivos = proveedores.length - activos;
 
-  const filtrados = productos.filter((p) => {
+  const filtrados = proveedores.filter((p) => {
     const q = busqueda.toLowerCase().trim();
-    const matchQ = !q || p.nombre?.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q);
-    const matchCat = !filtroCat || p.categoria === filtroCat;
-    return matchQ && matchCat;
+    if (!q) return true;
+    return [p.nombre, p.nit, p.contacto, p.email, p.telefono, p.direccion, p.estado]
+      .some((campo) => String(campo ?? "").toLowerCase().includes(q));
   });
 
   return (
-    <div className="gp-layout">
+    <div className="gv-layout">
       <style>{CSS}</style>
 
       {/* ── TOAST ── */}
@@ -275,65 +264,85 @@ export default function GestionProductos() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
-                  {editandoId ? "Editar producto" : "Nuevo producto"}
+                  {editandoId ? "Editar proveedor" : "Nuevo proveedor"}
                 </h2>
                 <p style={{ margin: "3px 0 0", fontSize: 12, color: "#94a3b8" }}>
-                  {editandoId ? "Modifica los datos del producto" : "Completa el formulario para crear"}
+                  {editandoId ? "Modifica los datos del proveedor" : "Completa el formulario para crear"}
                 </p>
               </div>
               <button onClick={cerrarForm} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             </div>
 
             <form onSubmit={handleGuardar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <FormField label="Nombre del producto" required error={errForm.nombre}>
+              <FormField label="Nombre del proveedor" required error={errForm.nombre}>
                 <input
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  placeholder="Ej: Laptop HP 15"
+                  placeholder="Ej: Distribuciones El Norte S.A.S."
                   style={inputCss("nombre")}
                   onFocus={(e) => !errForm.nombre && (e.target.style.borderColor = "#6366f1")}
                   onBlur={(e)  => !errForm.nombre && (e.target.style.borderColor = "#e2e8f0")}
                 />
               </FormField>
 
-              <div className="gp-form-grid">
-                <FormField label="Precio (COP)" required error={errForm.precio}>
+              <div className="gv-form-grid">
+                <FormField label="NIT" required error={errForm.nit}>
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={form.precio}
-                    onChange={(e) => setForm({ ...form, precio: e.target.value })}
-                    placeholder="0"
-                    style={inputCss("precio")}
-                    onFocus={(e) => !errForm.precio && (e.target.style.borderColor = "#6366f1")}
-                    onBlur={(e)  => !errForm.precio && (e.target.style.borderColor = "#e2e8f0")}
+                    value={form.nit}
+                    onChange={(e) => setForm({ ...form, nit: e.target.value })}
+                    placeholder="900123456-7"
+                    style={inputCss("nit")}
+                    onFocus={(e) => !errForm.nit && (e.target.style.borderColor = "#6366f1")}
+                    onBlur={(e)  => !errForm.nit && (e.target.style.borderColor = "#e2e8f0")}
                   />
                 </FormField>
-                <FormField label="Stock (unidades)" required error={errForm.stock}>
+                <FormField label="Persona de contacto" required error={errForm.contacto}>
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={form.stock}
-                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                    placeholder="0"
-                    style={inputCss("stock")}
-                    onFocus={(e) => !errForm.stock && (e.target.style.borderColor = "#6366f1")}
-                    onBlur={(e)  => !errForm.stock && (e.target.style.borderColor = "#e2e8f0")}
+                    value={form.contacto}
+                    onChange={(e) => setForm({ ...form, contacto: e.target.value })}
+                    placeholder="Ej: María Gómez"
+                    style={inputCss("contacto")}
+                    onFocus={(e) => !errForm.contacto && (e.target.style.borderColor = "#6366f1")}
+                    onBlur={(e)  => !errForm.contacto && (e.target.style.borderColor = "#e2e8f0")}
                   />
                 </FormField>
               </div>
 
-              <div className="gp-form-grid">
-                <FormField label="Categoría" required>
-                  <select
-                    value={form.categoria}
-                    onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-                    style={{ ...inputCss("categoria"), cursor: "pointer" }}
-                  >
-                    {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
-                  </select>
+              <div className="gv-form-grid">
+                <FormField label="Email" required error={errForm.email}>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="contacto@empresa.com"
+                    style={inputCss("email")}
+                    onFocus={(e) => !errForm.email && (e.target.style.borderColor = "#6366f1")}
+                    onBlur={(e)  => !errForm.email && (e.target.style.borderColor = "#e2e8f0")}
+                  />
+                </FormField>
+                <FormField label="Teléfono" required error={errForm.telefono}>
+                  <input
+                    type="tel"
+                    value={form.telefono}
+                    onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                    placeholder="3001234567"
+                    style={inputCss("telefono")}
+                    onFocus={(e) => !errForm.telefono && (e.target.style.borderColor = "#6366f1")}
+                    onBlur={(e)  => !errForm.telefono && (e.target.style.borderColor = "#e2e8f0")}
+                  />
+                </FormField>
+              </div>
+
+              <div className="gv-form-grid">
+                <FormField label="Dirección" required error={errForm.direccion}>
+                  <input
+                    value={form.direccion}
+                    onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                    placeholder="Ej: Calle 10 # 25-30, Ocaña"
+                    style={inputCss("direccion")}
+                    onFocus={(e) => !errForm.direccion && (e.target.style.borderColor = "#6366f1")}
+                    onBlur={(e)  => !errForm.direccion && (e.target.style.borderColor = "#e2e8f0")}
+                  />
                 </FormField>
                 <FormField label="Estado" required>
                   <select
@@ -346,18 +355,6 @@ export default function GestionProductos() {
                 </FormField>
               </div>
 
-              <FormField label="Descripción">
-                <textarea
-                  value={form.descripcion}
-                  onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                  placeholder="Descripción opcional del producto..."
-                  rows={3}
-                  style={{ ...inputCss("descripcion"), resize: "vertical", lineHeight: 1.5 }}
-                  onFocus={(e) => (e.target.style.borderColor = "#6366f1")}
-                  onBlur={(e)  => (e.target.style.borderColor = "#e2e8f0")}
-                />
-              </FormField>
-
               <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
                 <button type="button" onClick={cerrarForm} disabled={guardando}
                   style={{ flex: 1, padding: 11, borderRadius: 10, border: "1.5px solid #e2e8f0", background: "#fff", color: "#64748b", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
@@ -365,7 +362,7 @@ export default function GestionProductos() {
                 </button>
                 <button type="submit" disabled={guardando}
                   style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: guardando ? "not-allowed" : "pointer", opacity: guardando ? 0.7 : 1 }}>
-                  {guardando ? "Guardando..." : editandoId ? "Actualizar" : "Crear producto"}
+                  {guardando ? "Guardando..." : editandoId ? "Actualizar" : "Crear proveedor"}
                 </button>
               </div>
             </form>
@@ -378,7 +375,7 @@ export default function GestionProductos() {
         <ModalOverlay>
           <div style={{ background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 24px 60px rgba(0,0,0,.2)" }}>
             <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, margin: "0 auto 16px" }}>🗑️</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Eliminar producto</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Eliminar proveedor</h3>
             <p style={{ margin: "0 0 28px", fontSize: 13, color: "#64748b" }}>
               ¿Eliminar <strong>{confirmElim.nombre}</strong>? Esta acción no se puede deshacer.
             </p>
@@ -399,57 +396,49 @@ export default function GestionProductos() {
       <Sidebar />
 
       {/* ══ CONTENIDO PRINCIPAL ══ */}
-      <main className="gp-main">
+      <main className="gv-main">
 
         {/* Encabezado */}
-        <div className="gp-header-row" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, gap: 12 }}>
+        <div className="gv-header-row" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, gap: 12 }}>
           <div>
-            <h1 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Gestión de productos</h1>
-            <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Administra el catálogo de productos del sistema</p>
+            <h1 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Gestión de proveedores</h1>
+            <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Administra el directorio de proveedores de la organización</p>
           </div>
           <button onClick={abrirNuevo}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 14px rgba(99,102,241,.4)", whiteSpace: "nowrap", flexShrink: 0 }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = ".88")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
-            + Nuevo producto
+            + Nuevo proveedor
           </button>
         </div>
 
         {/* Stats */}
-        <div className="gp-stats">
-          <StatCard label="Total productos"  value={productos.length} icon="📦" color="#6366f1" />
-          <StatCard label="Activos"          value={activos}          icon="🟢" color="#22c55e" />
-          <StatCard label="Unidades en stock" value={stockTotal}      icon="📊" color="#8b5cf6" />
+        <div className="gv-stats">
+          <StatCard label="Total proveedores" value={proveedores.length} icon="🚚" color="#6366f1" />
+          <StatCard label="Activos"           value={activos}            icon="🟢" color="#22c55e" />
+          <StatCard label="Inactivos"         value={inactivos}          icon="⚫" color="#64748b" />
         </div>
 
-        {/* Barra de búsqueda y filtros */}
-        <div className="gp-search-bar" style={{ background: "#fff", borderRadius: 12, padding: "14px 20px", marginBottom: 16, boxShadow: "0 2px 8px rgba(0,0,0,.06)", display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Barra de búsqueda */}
+        <div className="gv-search-bar" style={{ background: "#fff", borderRadius: 12, padding: "14px 20px", marginBottom: 16, boxShadow: "0 2px 8px rgba(0,0,0,.06)", display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
             <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 15, pointerEvents: "none" }}>🔍</span>
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por nombre o descripción..."
+              placeholder="Buscar por nombre, NIT, contacto, email, teléfono o dirección..."
               style={{ width: "100%", padding: "9px 12px 9px 34px", borderRadius: 8, border: "1.5px solid #e2e8f0", fontSize: 13, background: "#f8fafc", color: "#0f172a", outline: "none", boxSizing: "border-box" }}
               onFocus={(e) => (e.target.style.borderColor = "#6366f1")}
               onBlur={(e)  => (e.target.style.borderColor = "#e2e8f0")}
             />
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            {CATEGORIAS.map((cat) => (
-              <button key={cat} onClick={() => setFiltroCat(filtroCat === cat ? "" : cat)}
-                style={{ padding: "5px 11px", borderRadius: 20, border: `1.5px solid ${filtroCat === cat ? "#6366f1" : "#e2e8f0"}`, background: filtroCat === cat ? "#ede9fe" : "#fff", color: filtroCat === cat ? "#6366f1" : "#64748b", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                {CATEGORIA_STYLE[cat]?.icon} {cat}
-              </button>
-            ))}
-            {(busqueda || filtroCat) && (
-              <button onClick={() => { setBusqueda(""); setFiltroCat(""); }}
-                style={{ padding: "5px 10px", borderRadius: 20, border: "1px solid #e2e8f0", background: "#fff", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>
-                ✕ Limpiar
-              </button>
-            )}
-          </div>
+          {busqueda && (
+            <button onClick={() => setBusqueda("")}
+              style={{ padding: "5px 10px", borderRadius: 20, border: "1px solid #e2e8f0", background: "#fff", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>
+              ✕ Limpiar
+            </button>
+          )}
           <span style={{ fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap" }}>
             {filtrados.length} resultado{filtrados.length !== 1 ? "s" : ""}
           </span>
@@ -460,55 +449,50 @@ export default function GestionProductos() {
           <div style={{ padding: "4rem", textAlign: "center" }}><Spinner /></div>
         ) : filtrados.length === 0 ? (
           <div style={{ background: "#fff", borderRadius: 16, padding: "3rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,.07)" }}>
-            <p style={{ fontSize: 32, marginBottom: 8 }}>📦</p>
+            <p style={{ fontSize: 32, marginBottom: 8 }}>🚚</p>
             <p style={{ color: "#94a3b8", fontSize: 14, marginBottom: 16 }}>
-              {productos.length === 0 ? "No hay productos registrados aún." : `Sin resultados para "${busqueda || filtroCat}".`}
+              {proveedores.length === 0 ? "No hay proveedores registrados aún." : `Sin resultados para "${busqueda}".`}
             </p>
-            {productos.length === 0 && (
+            {proveedores.length === 0 && (
               <button onClick={abrirNuevo}
                 style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                + Crear primer producto
+                + Crear primer proveedor
               </button>
             )}
           </div>
         ) : (
           <>
             {/* ── TABLA (desktop) ── */}
-            <div className="gp-table-wrap" style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.07)", overflow: "hidden" }}>
+            <div className="gv-table-wrap" style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.07)", overflow: "hidden" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-                    {["Producto", "Categoría", "Precio", "Stock", "Estado", "Acciones"].map((h) => (
+                    {["Proveedor", "NIT", "Contacto", "Email", "Teléfono", "Estado", "Acciones"].map((h) => (
                       <th key={h} style={{ padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#94a3b8", textAlign: h === "Acciones" ? "center" : "left", textTransform: "uppercase", letterSpacing: ".5px" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtrados.map((p, i) => (
-                    <tr key={p.id} className="gp-row" style={{ borderBottom: i < filtrados.length - 1 ? "1px solid #f1f5f9" : "none" }}>
+                    <tr key={p.id} className="gv-row" style={{ borderBottom: i < filtrados.length - 1 ? "1px solid #f1f5f9" : "none" }}>
                       <td style={{ padding: "14px 16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ width: 36, height: 36, borderRadius: 10, background: (CATEGORIA_STYLE[p.categoria] ?? CATEGORIA_STYLE["Otros"]).bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>
-                            {(CATEGORIA_STYLE[p.categoria] ?? CATEGORIA_STYLE["Otros"]).icon}
-                          </div>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: "#e0e7ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>🚚</div>
                           <div style={{ minWidth: 0 }}>
                             <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>{p.nombre}</p>
-                            {p.descripcion && <p style={{ margin: 0, fontSize: 11, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>{p.descripcion}</p>}
+                            {p.direccion && <p style={{ margin: 0, fontSize: 11, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>📍 {p.direccion}</p>}
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: "14px 16px" }}><CategoriaBadge categoria={p.categoria} /></td>
-                      <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{formatPrecio(p.precio)}</td>
-                      <td style={{ padding: "14px 16px" }}>
-                        <span style={{ background: p.stock > 0 ? "#f0fdf4" : "#fef2f2", color: p.stock > 0 ? "#16a34a" : "#dc2626", padding: "3px 10px", borderRadius: 20, fontSize: 13, fontWeight: 700 }}>
-                          {p.stock}
-                        </span>
-                      </td>
+                      <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600, color: "#475569", whiteSpace: "nowrap" }}>{p.nit}</td>
+                      <td style={{ padding: "14px 16px", fontSize: 13, color: "#0f172a" }}>{p.contacto}</td>
+                      <td style={{ padding: "14px 16px", fontSize: 13, color: "#6366f1" }}>{p.email}</td>
+                      <td style={{ padding: "14px 16px", fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>{p.telefono}</td>
                       <td style={{ padding: "14px 16px" }}><EstadoBadge estado={p.estado} /></td>
                       <td style={{ padding: "14px 16px", textAlign: "center" }}>
                         <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-                          <button className="gp-action-btn gp-edit-btn" onClick={() => abrirEditar(p)}>Editar</button>
-                          <button className="gp-action-btn gp-del-btn"  onClick={() => setConfirmElim(p)}>Eliminar</button>
+                          <button className="gv-action-btn gv-edit-btn" onClick={() => abrirEditar(p)}>Editar</button>
+                          <button className="gv-action-btn gv-del-btn"  onClick={() => setConfirmElim(p)}>Eliminar</button>
                         </div>
                       </td>
                     </tr>
@@ -518,37 +502,36 @@ export default function GestionProductos() {
             </div>
 
             {/* ── CARDS (móvil) ── */}
-            <div className="gp-cards-wrap">
+            <div className="gv-cards-wrap">
               {filtrados.map((p) => (
                 <div key={p.id} style={{ background: "#fff", borderRadius: 14, padding: "16px 18px", boxShadow: "0 2px 10px rgba(0,0,0,.07)", animation: "fadeUp .25s ease" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12, gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: (CATEGORIA_STYLE[p.categoria] ?? CATEGORIA_STYLE["Otros"]).bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                        {(CATEGORIA_STYLE[p.categoria] ?? CATEGORIA_STYLE["Otros"]).icon}
-                      </div>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: "#e0e7ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🚚</div>
                       <div style={{ minWidth: 0 }}>
                         <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nombre}</p>
-                        <CategoriaBadge categoria={p.categoria} />
+                        <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>NIT: {p.nit}</p>
                       </div>
                     </div>
                     <EstadoBadge estado={p.estado} />
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
                     <div style={{ background: "#f8fafc", borderRadius: 8, padding: "8px 10px" }}>
-                      <p style={{ margin: "0 0 2px", fontSize: 10, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase" }}>Precio</p>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{formatPrecio(p.precio)}</p>
+                      <p style={{ margin: "0 0 2px", fontSize: 10, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase" }}>Contacto</p>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.contacto}</p>
                     </div>
                     <div style={{ background: "#f8fafc", borderRadius: 8, padding: "8px 10px" }}>
-                      <p style={{ margin: "0 0 2px", fontSize: 10, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase" }}>Stock</p>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: p.stock > 0 ? "#16a34a" : "#dc2626" }}>{p.stock} uds.</p>
+                      <p style={{ margin: "0 0 2px", fontSize: 10, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase" }}>Teléfono</p>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{p.telefono}</p>
                     </div>
                   </div>
-                  {p.descripcion && (
-                    <p style={{ margin: "0 0 12px", fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>{p.descripcion}</p>
+                  <p style={{ margin: "0 0 4px", fontSize: 12, color: "#6366f1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>✉️ {p.email}</p>
+                  {p.direccion && (
+                    <p style={{ margin: "0 0 12px", fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>📍 {p.direccion}</p>
                   )}
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button className="gp-action-btn gp-edit-btn" style={{ flex: 1 }} onClick={() => abrirEditar(p)}>Editar</button>
-                    <button className="gp-action-btn gp-del-btn"  style={{ flex: 1 }} onClick={() => setConfirmElim(p)}>Eliminar</button>
+                    <button className="gv-action-btn gv-edit-btn" style={{ flex: 1 }} onClick={() => abrirEditar(p)}>Editar</button>
+                    <button className="gv-action-btn gv-del-btn"  style={{ flex: 1 }} onClick={() => setConfirmElim(p)}>Eliminar</button>
                   </div>
                 </div>
               ))}
