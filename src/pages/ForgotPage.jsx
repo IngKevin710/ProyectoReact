@@ -7,6 +7,9 @@ import app from "../firebase";
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
+// Correo de recuperación y página de restablecimiento en español
+auth.languageCode = "es";
+
 const FIREBASE_ERRORS = {
   "auth/invalid-email":          "El formato del correo no es válido.",
   "auth/network-request-failed": "Error de red. Verifica tu conexión e intenta de nuevo.",
