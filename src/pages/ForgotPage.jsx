@@ -31,6 +31,10 @@ const PROVIDER_META = {
 
 const COOLDOWN_SECONDS = 60;
 
+// Tras restablecer la contraseña, el botón "Continuar" de la página de
+// Firebase regresa al login de la app (funciona en localhost y producción)
+const actionCodeSettings = () => ({ url: `${window.location.origin}/login` });
+
 export default function ForgotPage() {
   const [email, setEmail]           = useState("");
   const [emailError, setEmailError] = useState("");
@@ -101,7 +105,7 @@ export default function ForgotPage() {
     }
 
     try {
-      await sendPasswordResetEmail(auth, email.trim());
+      await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings());
       setSent(true);
       setCooldown(COOLDOWN_SECONDS);
     } catch (err) {
@@ -120,7 +124,7 @@ export default function ForgotPage() {
     if (cooldown > 0) return;
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email.trim());
+      await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings());
       setCooldown(COOLDOWN_SECONDS);
     } catch (err) {
       setEmailError(FIREBASE_ERRORS[err.code] ?? "Ocurrió un error. Intenta de nuevo.");
