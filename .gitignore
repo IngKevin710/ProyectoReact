@@ -13,6 +13,9 @@ dist-ssr
 .vite
 *.local
 
+# Firebase (caché local de despliegue)
+.firebase
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
