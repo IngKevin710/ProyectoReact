@@ -248,6 +248,7 @@ export default function ProfilePage() {
       {menuAbierto && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setMenuAbierto(false)}>
           <div style={{ position: "absolute", top: 56, left: 0, right: 0, background: "#1a1035", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, boxShadow: "0 8px 24px rgba(0,0,0,.3)" }} onClick={(e) => e.stopPropagation()}>
+            <button className="pp-nav-btn" onClick={() => { navigate("/dashboard"); setMenuAbierto(false); }}><span>🏠</span> Dashboard</button>
             <button className="pp-nav-btn pp-nav-active"><span>🔐</span> Historial de sesiones</button>
             <button className="pp-nav-btn" onClick={() => { navigate("/usuarios"); setMenuAbierto(false); }}><span>👥</span> Gestión de usuarios</button>
             <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "4px 0" }} />
@@ -290,6 +291,7 @@ export default function ProfilePage() {
         <div style={{ height: 1, background: "rgba(255,255,255,.08)", marginBottom: 12, zIndex: 1 }} />
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 4, zIndex: 1 }}>
+          <button className="pp-nav-btn" onClick={() => navigate("/dashboard")}><span style={{ fontSize: 16 }}>🏠</span> Dashboard</button>
           <button className="pp-nav-btn pp-nav-active"><span style={{ fontSize: 16 }}>🔐</span> Historial de sesiones</button>
           <button className="pp-nav-btn" onClick={() => navigate("/usuarios")}><span style={{ fontSize: 16 }}>👥</span> Gestión de usuarios</button>
         </nav>
