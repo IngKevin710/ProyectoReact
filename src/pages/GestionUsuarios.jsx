@@ -317,6 +317,7 @@ export default function GestionUsuarios() {
             <button className="nav-btn" onClick={() => { navigate("/dashboard"); setMenuAbierto(false); }}><span>🏠</span> Dashboard</button>
             <button className="nav-btn" onClick={() => { navigate("/perfil"); setMenuAbierto(false); }}><span>🔐</span> Historial de sesiones</button>
             <button className="nav-btn active"><span>👥</span> Gestión de usuarios</button>
+            <button className="nav-btn" onClick={() => { navigate("/productos"); setMenuAbierto(false); }}><span>📦</span> Gestión de productos</button>
             <button onClick={handleLogout} style={{ marginTop: 8, padding: "10px 14px", borderRadius: 10, border: "none", background: "rgba(239,68,68,.18)", color: "#f87171", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cerrar sesión</button>
           </div>
         </div>
@@ -350,6 +351,7 @@ export default function GestionUsuarios() {
           <button className="nav-btn" onClick={() => navigate("/dashboard")}><span style={{ fontSize: 16 }}>🏠</span> Dashboard</button>
           <button className="nav-btn" onClick={() => navigate("/perfil")}><span style={{ fontSize: 16 }}>🔐</span> Historial de sesiones</button>
           <button className="nav-btn active"><span style={{ fontSize: 16 }}>👥</span> Gestión de usuarios</button>
+          <button className="nav-btn" onClick={() => navigate("/productos")}><span style={{ fontSize: 16 }}>📦</span> Gestión de productos</button>
         </nav>
 
         <div style={{ flex: 1 }} />

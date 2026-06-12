@@ -59,6 +59,15 @@ const MODULES = [
     accent: "#8b5cf6",
     accentBg: "#f3e8ff",
   },
+  {
+    key: "productos",
+    icon: "📦",
+    title: "Gestión de productos",
+    desc: "Crea, edita y controla el catálogo de productos con precios y stock.",
+    route: "/productos",
+    accent: "#0891b2",
+    accentBg: "#e0f2fe",
+  },
 ];
 
 const CSS = `
@@ -255,6 +264,7 @@ export default function DashboardPage() {
             <button className="db-nav-btn db-nav-active"><span>🏠</span> Dashboard</button>
             <button className="db-nav-btn" onClick={() => { navigate("/perfil"); setMenuAbierto(false); }}><span>🔐</span> Historial de sesiones</button>
             <button className="db-nav-btn" onClick={() => { navigate("/usuarios"); setMenuAbierto(false); }}><span>👥</span> Gestión de usuarios</button>
+            <button className="db-nav-btn" onClick={() => { navigate("/productos"); setMenuAbierto(false); }}><span>📦</span> Gestión de productos</button>
             <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "4px 0" }} />
             <div style={{ background: "rgba(255,255,255,.05)", borderRadius: 10, padding: "8px 12px", textAlign: "center" }}>
               <p style={{ margin: "0 0 2px", fontSize: 10, color: "rgba(255,255,255,.35)" }}>⏱ Sesión activa por</p>
@@ -298,6 +308,7 @@ export default function DashboardPage() {
           <button className="db-nav-btn db-nav-active"><span style={{ fontSize: 16 }}>🏠</span> Dashboard</button>
           <button className="db-nav-btn" onClick={() => navigate("/perfil")}><span style={{ fontSize: 16 }}>🔐</span> Historial de sesiones</button>
           <button className="db-nav-btn" onClick={() => navigate("/usuarios")}><span style={{ fontSize: 16 }}>👥</span> Gestión de usuarios</button>
+          <button className="db-nav-btn" onClick={() => navigate("/productos")}><span style={{ fontSize: 16 }}>📦</span> Gestión de productos</button>
         </nav>
 
         <div style={{ flex: 1 }} />
