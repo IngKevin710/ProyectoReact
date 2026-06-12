@@ -30,9 +30,9 @@ export default function Register() {
   const getPasswordStrength = (pwd) => {
     if (!pwd) return { score: 0, label: "", color: "" };
     let score = 0;
-    if (pwd.length >= 6) score++;
     if (pwd.length >= 10) score++;
     if (/[A-Z]/.test(pwd)) score++;
+    if (/[a-z]/.test(pwd)) score++;
     if (/[0-9]/.test(pwd)) score++;
     if (/[^A-Za-z0-9]/.test(pwd)) score++;
 
@@ -53,7 +53,11 @@ export default function Register() {
     if (!form.email.trim()) newErrors.email = "El correo es obligatorio.";
     else if (!emailRegex.test(form.email)) newErrors.email = "El formato del correo no es válido.";
     if (!form.password.trim()) newErrors.password = "La contraseña es obligatoria.";
-    else if (form.password.length < 6) newErrors.password = "Debe tener mínimo 6 caracteres.";
+    else if (form.password.length < 10) newErrors.password = "Debe tener mínimo 10 caracteres.";
+    else if (!/[A-Z]/.test(form.password)) newErrors.password = "Debe incluir al menos una letra mayúscula.";
+    else if (!/[a-z]/.test(form.password)) newErrors.password = "Debe incluir al menos una letra minúscula.";
+    else if (!/[0-9]/.test(form.password)) newErrors.password = "Debe incluir al menos un número.";
+    else if (!/[^A-Za-z0-9]/.test(form.password)) newErrors.password = "Debe incluir al menos un carácter especial (ej: !@#$%).";
     if (!form.confirmar.trim()) newErrors.confirmar = "Confirma tu contraseña.";
     else if (form.password !== form.confirmar) newErrors.confirmar = "Las contraseñas no coinciden.";
     return newErrors;
@@ -446,7 +450,7 @@ export default function Register() {
                     type={showPassword ? "text" : "password"}
                     name="password" value={form.password}
                     onChange={handleChange} onBlur={handleBlur}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mín. 10 caracteres, mayúscula, minúscula, número y símbolo"
                     style={getInputStyle("password", true, true)}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} style={toggleBtnStyle}>

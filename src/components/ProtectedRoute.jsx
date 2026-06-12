@@ -18,5 +18,5 @@ export default function ProtectedRoute({ children }) {
 
   if (user === undefined) return <p>Cargando...</p>;
 
-  return user ? children : <Navigate to="/" />;
+  return user ? children : <Navigate to="/login" replace />;
 }

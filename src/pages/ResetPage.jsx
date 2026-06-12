@@ -6,9 +6,11 @@ import app from "../firebase";
 const auth = getAuth(app);
 
 const passwordRules = (pwd) => ({
-  length:    pwd.length >= 8,
+  length:    pwd.length >= 10,
   uppercase: /[A-Z]/.test(pwd),
+  lowercase: /[a-z]/.test(pwd),
   number:    /[0-9]/.test(pwd),
+  special:   /[^A-Za-z0-9]/.test(pwd),
 });
 
 const FIREBASE_ERRORS = {
@@ -44,7 +46,7 @@ export default function ResetPage() {
 
   const validate = () => {
     const newErrors = {};
-    if (!rules.length || !rules.uppercase || !rules.number) {
+    if (!rules.length || !rules.uppercase || !rules.lowercase || !rules.number || !rules.special) {
       newErrors.password = "La contraseña no cumple los requisitos.";
     }
     if (!confirmPassword) {
@@ -152,9 +154,11 @@ export default function ResetPage() {
             </p>
             <div style={{ marginTop: "2rem", display: "flex", flexDirection: "column", gap: 10, textAlign: "left" }}>
               {[
-                { label: "Mínimo 8 caracteres",      ok: rules.length },
-                { label: "Al menos una mayúscula",   ok: rules.uppercase },
-                { label: "Al menos un número",       ok: rules.number },
+                { label: "Mínimo 10 caracteres",            ok: rules.length },
+                { label: "Al menos una mayúscula",          ok: rules.uppercase },
+                { label: "Al menos una minúscula",          ok: rules.lowercase },
+                { label: "Al menos un número",              ok: rules.number },
+                { label: "Al menos un carácter especial",   ok: rules.special },
               ].map(({ label, ok }) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: ok ? "#4ade80" : "rgba(255,255,255,0.25)", flexShrink: 0, transition: "background 0.2s" }} />
@@ -208,7 +212,7 @@ export default function ResetPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setErrors({ ...errors, password: "" }); }}
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder="Mínimo 10 caracteres"
                     style={{
                       width: "100%",
                       padding: "10px 40px 10px 36px",
