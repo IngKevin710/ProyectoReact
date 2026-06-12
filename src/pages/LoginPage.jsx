@@ -75,8 +75,8 @@ export default function LoginPage() {
       const snap = await getDoc(doc(db, "users", credential.user.uid));
       const data = snap.data() || {};
       await registrarSesion(data.nombre || "Sin nombre", data.apellido || "Sin apellido", "email", credential.user.uid);
-      navigate("/perfil");
-    } catch (error) {
+      navigate("/dashboard");
+    } catch {
       setErrors({ email: "Credenciales incorrectas" });
     }
   };
@@ -122,7 +122,7 @@ export default function LoginPage() {
       }
 
       await registrarSesion(nombre, apellido, metodo, uid);
-      navigate("/perfil");
+      navigate("/dashboard");
     } catch (error) {
       const mensaje = SOCIAL_ERROR_MESSAGES[error.code];
       if (mensaje !== null) {
