@@ -1,25 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAuth, signOut } from "firebase/auth";
 import { useAuthUser } from "../hooks/useAuthUser";
-import { useInactivityLogout } from "../hooks/useInactivityLogout";
-import {
-  obtenerHistorial,
-  cerrarSesion,
-  actualizarHeartbeat,
-  cerrarSesionesExpiradas,
-} from "../services/historialService";
+import Sidebar from "../components/Sidebar";
+import { obtenerHistorial, cerrarSesionesExpiradas } from "../services/historialService";
 import { obtenerUsuarios } from "../services/usuariosService";
-import app from "../firebase";
-
-const auth = getAuth(app);
-
-const formatTimer = (ms) => {
-  const total = Math.ceil(ms / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-};
 
 const formatHora = (ts) => {
   if (!ts) return "—";
@@ -68,6 +52,15 @@ const MODULES = [
     accent: "#0891b2",
     accentBg: "#e0f2fe",
   },
+  {
+    key: "proveedores",
+    icon: "🚚",
+    title: "Gestión de proveedores",
+    desc: "Administra el directorio de proveedores con sus datos de contacto.",
+    route: "/proveedores",
+    accent: "#16a34a",
+    accentBg: "#dcfce7",
+  },
 ];
 
 const CSS = `
@@ -75,13 +68,7 @@ const CSS = `
   @keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
   .db-layout  { display:flex; height:100dvh; font-family:'Segoe UI',sans-serif; background:#f1f5f9; overflow:hidden; }
-
-  .db-sidebar { width:240px; min-width:240px; flex-shrink:0; display:flex; flex-direction:column;
-                background:#1a1035; padding:28px 12px 20px; box-sizing:border-box;
-                box-shadow:4px 0 24px rgba(0,0,0,.15); position:relative; overflow:hidden; }
-
   .db-main   { flex:1; overflow-y:auto; padding:28px 32px; min-width:0; }
-  .db-topbar { display:none; }
 
   .db-stats       { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
   .db-modules     { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
@@ -95,10 +82,6 @@ const CSS = `
   }
   @media (max-width:768px) {
     .db-layout  { flex-direction:column; }
-    .db-sidebar { display:none; }
-    .db-topbar  { display:flex; align-items:center; justify-content:space-between;
-                  padding:14px 18px; background:#1a1035; flex-shrink:0;
-                  box-shadow:0 2px 12px rgba(0,0,0,.2); z-index:10; }
     .db-main    { padding:14px; flex:1; height:0; overflow-y:auto; }
     .db-stats   { grid-template-columns:1fr 1fr; }
     .db-modules { grid-template-columns:1fr; }
@@ -106,14 +89,6 @@ const CSS = `
   @media (max-width:480px) {
     .db-stats { grid-template-columns:1fr; }
   }
-
-  .db-nav-btn { display:flex; align-items:center; gap:10px; width:100%; padding:10px 14px;
-                border-radius:10px; background:transparent; border:none;
-                color:rgba(255,255,255,.55); font-size:13px; font-weight:500;
-                cursor:pointer; text-align:left; }
-  .db-nav-btn:hover { background:rgba(255,255,255,.07); }
-  .db-nav-active { background:rgba(99,102,241,.22) !important; border-left:3px solid #6366f1;
-                   color:#a5b4fc !important; font-weight:600 !important; }
 
   .db-module-card { background:#fff; border-radius:16px; padding:24px;
                     box-shadow:0 2px 12px rgba(0,0,0,.07); cursor:pointer;
@@ -126,22 +101,6 @@ const CSS = `
 
   .db-session-row:hover { background:#f8fafc; }
 `;
-
-function Avatar({ displayName, photoURL, size = 40 }) {
-  const [err, setErr] = useState(false);
-  const initial = (displayName || "?").charAt(0).toUpperCase();
-  const base = {
-    width: size, height: size, borderRadius: "50%", flexShrink: 0,
-    border: "2px solid rgba(255,255,255,.2)",
-  };
-  if (photoURL && !err)
-    return <img src={photoURL} alt="av" onError={() => setErr(true)} style={{ ...base, objectFit: "cover" }} />;
-  return (
-    <div style={{ ...base, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 700, color: "#fff" }}>
-      {initial}
-    </div>
-  );
-}
 
 function AvatarMain({ displayName, photoURL, size = 40 }) {
   const [err, setErr] = useState(false);
@@ -181,22 +140,6 @@ export default function DashboardPage() {
   const [sesiones, setSesiones] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [menuAbierto, setMenuAbierto] = useState(false);
-
-  const handleLogout = async () => {
-    await cerrarSesion();
-    await signOut(auth);
-    navigate("/");
-  };
-
-  const { remaining, reset } = useInactivityLogout(handleLogout);
-  const showWarning = remaining <= 60_000 && remaining > 0;
-  const timerColor = remaining <= 60_000 ? "#ef4444" : remaining <= 120_000 ? "#f59e0b" : "#22c55e";
-
-  useEffect(() => {
-    const id = setInterval(actualizarHeartbeat, 60_000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     cerrarSesionesExpiradas()
@@ -241,87 +184,7 @@ export default function DashboardPage() {
     <div className="db-layout">
       <style>{CSS}</style>
 
-      {/* ── MODAL INACTIVIDAD ── */}
-      {showWarning && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, backdropFilter: "blur(2px)", padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 340, width: "100%", textAlign: "center", boxShadow: "0 24px 60px rgba(0,0,0,.2)" }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, margin: "0 auto 16px" }}>⚠️</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Sesión por expirar</h3>
-            <p style={{ margin: "0 0 6px", fontSize: 13, color: "#64748b" }}>Tu sesión cerrará por inactividad en:</p>
-            <p style={{ margin: "0 0 28px", fontSize: 36, fontWeight: 800, color: "#ef4444", fontVariantNumeric: "tabular-nums" }}>{formatTimer(remaining)}</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={reset} style={{ width: "100%", padding: 11, borderRadius: 10, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Continuar sesión</button>
-              <button onClick={handleLogout} style={{ width: "100%", padding: 11, borderRadius: 10, border: "1.5px solid #fecaca", background: "#fff5f5", color: "#ef4444", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cerrar sesión ahora</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── MENÚ MÓVIL ── */}
-      {menuAbierto && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setMenuAbierto(false)}>
-          <div style={{ position: "absolute", top: 56, left: 0, right: 0, background: "#1a1035", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, boxShadow: "0 8px 24px rgba(0,0,0,.3)" }} onClick={(e) => e.stopPropagation()}>
-            <button className="db-nav-btn db-nav-active"><span>🏠</span> Dashboard</button>
-            <button className="db-nav-btn" onClick={() => { navigate("/perfil"); setMenuAbierto(false); }}><span>🔐</span> Historial de sesiones</button>
-            <button className="db-nav-btn" onClick={() => { navigate("/usuarios"); setMenuAbierto(false); }}><span>👥</span> Gestión de usuarios</button>
-            <button className="db-nav-btn" onClick={() => { navigate("/productos"); setMenuAbierto(false); }}><span>📦</span> Gestión de productos</button>
-            <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "4px 0" }} />
-            <div style={{ background: "rgba(255,255,255,.05)", borderRadius: 10, padding: "8px 12px", textAlign: "center" }}>
-              <p style={{ margin: "0 0 2px", fontSize: 10, color: "rgba(255,255,255,.35)" }}>⏱ Sesión activa por</p>
-              <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: timerColor, fontVariantNumeric: "tabular-nums" }}>{formatTimer(remaining)}</p>
-            </div>
-            <button onClick={handleLogout} style={{ marginTop: 4, padding: "10px 14px", borderRadius: 10, border: "none", background: "rgba(239,68,68,.18)", color: "#f87171", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cerrar sesión</button>
-          </div>
-        </div>
-      )}
-
-      {/* ── TOP BAR MÓVIL ── */}
-      <div className="db-topbar">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Avatar displayName={displayName} photoURL={photoURL} size={34} />
-          <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>🏠 Dashboard</span>
-        </div>
-        <button onClick={() => setMenuAbierto(!menuAbierto)} style={{ background: "rgba(255,255,255,.1)", border: "none", borderRadius: 8, width: 36, height: 36, cursor: "pointer", fontSize: 18, color: "#fff" }}>☰</button>
-      </div>
-
-      {/* ══ SIDEBAR ══ */}
-      <aside className="db-sidebar">
-        <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", top: -50, right: -50, background: "rgba(99,102,241,.1)", pointerEvents: "none" }} />
-
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20, zIndex: 1 }}>
-          <div style={{ position: "relative", marginBottom: 10 }}>
-            <Avatar displayName={displayName} photoURL={photoURL} size={72} />
-            <span style={{ position: "absolute", bottom: 2, right: 2, width: 13, height: 13, background: "#22c55e", borderRadius: "50%", border: "2px solid #1a1035" }} />
-          </div>
-          <h3 style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 700, color: "#fff", textAlign: "center", wordBreak: "break-word" }}>{displayName}</h3>
-          <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,.4)", textAlign: "center", wordBreak: "break-all", lineHeight: 1.4 }}>{email}</p>
-        </div>
-
-        <div style={{ background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 10, padding: "8px 12px", textAlign: "center", marginBottom: 20, zIndex: 1 }}>
-          <p style={{ margin: "0 0 2px", fontSize: 10, color: "rgba(255,255,255,.35)", letterSpacing: ".3px" }}>⏱ Sesión activa por</p>
-          <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: timerColor, fontVariantNumeric: "tabular-nums" }}>{formatTimer(remaining)}</p>
-        </div>
-
-        <div style={{ height: 1, background: "rgba(255,255,255,.08)", marginBottom: 12, zIndex: 1 }} />
-
-        <nav style={{ display: "flex", flexDirection: "column", gap: 4, zIndex: 1 }}>
-          <button className="db-nav-btn db-nav-active"><span style={{ fontSize: 16 }}>🏠</span> Dashboard</button>
-          <button className="db-nav-btn" onClick={() => navigate("/perfil")}><span style={{ fontSize: 16 }}>🔐</span> Historial de sesiones</button>
-          <button className="db-nav-btn" onClick={() => navigate("/usuarios")}><span style={{ fontSize: 16 }}>👥</span> Gestión de usuarios</button>
-          <button className="db-nav-btn" onClick={() => navigate("/productos")}><span style={{ fontSize: 16 }}>📦</span> Gestión de productos</button>
-        </nav>
-
-        <div style={{ flex: 1 }} />
-
-        <button
-          onClick={handleLogout}
-          style={{ width: "100%", padding: 11, borderRadius: 10, border: "none", background: "rgba(239,68,68,.18)", color: "#f87171", fontSize: 13, fontWeight: 600, cursor: "pointer", zIndex: 1 }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,.32)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(239,68,68,.18)")}
-        >
-          Cerrar sesión
-        </button>
-      </aside>
+      <Sidebar />
 
       {/* ══ CONTENIDO PRINCIPAL ══ */}
       <main className="db-main">
