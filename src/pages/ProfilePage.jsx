@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getAuth, signOut } from "firebase/auth";
 import { useAuthUser } from "../hooks/useAuthUser";
 import { useInactivityLogout } from "../hooks/useInactivityLogout";
@@ -46,6 +46,7 @@ function Spinner() {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  useLocation(); // fuerza re-render al cambiar ruta
   const { user, loading: authLoading } = useAuthUser();
 
   const [historial, setHistorial]     = useState([]);
@@ -137,11 +138,19 @@ export default function ProfilePage() {
         {/* Divisor */}
         <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: 12, zIndex: 1 }} />
 
-        {/* Sección activa */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "rgba(99,102,241,0.2)", borderLeft: "3px solid #6366f1", zIndex: 1 }}>
-          <span style={{ fontSize: 16 }}>🔐</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#a5b4fc" }}>Historial de sesiones</span>
-        </div>
+        {/* Nav */}
+        <nav style={{ display: "flex", flexDirection: "column", gap: 4, zIndex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "rgba(99,102,241,0.2)", borderLeft: "3px solid #6366f1" }}>
+            <span style={{ fontSize: 16 }}>🔐</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#a5b4fc" }}>Historial de sesiones</span>
+          </div>
+          <button onClick={() => navigate("/usuarios")}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "transparent", border: "none", color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left" }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+            <span style={{ fontSize: 16 }}>👥</span> Gestión de usuarios
+          </button>
+        </nav>
 
         {/* Empuja el botón al fondo */}
         <div style={{ flex: 1 }} />
