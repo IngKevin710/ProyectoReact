@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getAuth, signOut } from "firebase/auth";
 import { useAuthUser } from "../hooks/useAuthUser";
 import { useInactivityLogout } from "../hooks/useInactivityLogout";
@@ -94,6 +94,7 @@ function Spinner() {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  useLocation(); // fuerza re-render al cambiar ruta
   const { user, loading: authLoading } = useAuthUser();
 
   const [historial, setHistorial]     = useState([]);
@@ -248,6 +249,7 @@ export default function ProfilePage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setMenuAbierto(false)}>
           <div style={{ position: "absolute", top: 56, left: 0, right: 0, background: "#1a1035", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, boxShadow: "0 8px 24px rgba(0,0,0,.3)" }} onClick={(e) => e.stopPropagation()}>
             <button className="pp-nav-btn pp-nav-active"><span>🔐</span> Historial de sesiones</button>
+            <button className="pp-nav-btn" onClick={() => { navigate("/usuarios"); setMenuAbierto(false); }}><span>👥</span> Gestión de usuarios</button>
             <div style={{ height: 1, background: "rgba(255,255,255,.08)", margin: "4px 0" }} />
             <div style={{ background: "rgba(255,255,255,.05)", borderRadius: 10, padding: "8px 12px", textAlign: "center" }}>
               <p style={{ margin: "0 0 2px", fontSize: 10, color: "rgba(255,255,255,.35)" }}>⏱ Sesión activa por</p>
@@ -289,6 +291,7 @@ export default function ProfilePage() {
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 4, zIndex: 1 }}>
           <button className="pp-nav-btn pp-nav-active"><span style={{ fontSize: 16 }}>🔐</span> Historial de sesiones</button>
+          <button className="pp-nav-btn" onClick={() => navigate("/usuarios")}><span style={{ fontSize: 16 }}>👥</span> Gestión de usuarios</button>
         </nav>
 
         <div style={{ flex: 1 }} />
